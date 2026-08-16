@@ -174,9 +174,11 @@ CREATE TABLE IF NOT EXISTS enrollments (
   enrolled_on     date NOT NULL,
   left_on         date,
   roll_no         int,
-  status          varchar(12) NOT NULL DEFAULT 'active' CHECK (status IN ('active','transferred','withdrawn','promoted','repeated')),
-  UNIQUE (student_id, academic_year_id) WHERE (left_on IS NULL)
+  status          varchar(12) NOT NULL DEFAULT 'active' CHECK (status IN ('active','transferred','withdrawn','promoted','repeated'))
 );
+-- at most one active enrollment per student per academic year
+CREATE UNIQUE INDEX IF NOT EXISTS uq_enrollments_one_active
+  ON enrollments(student_id, academic_year_id) WHERE (left_on IS NULL);
 CREATE INDEX IF NOT EXISTS idx_enrollments_section ON enrollments(section_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_year ON enrollments(academic_year_id);
 
@@ -382,6 +384,18 @@ CREATE TABLE IF NOT EXISTS student_discounts (
 );
 CREATE INDEX IF NOT EXISTS idx_student_discounts_student ON student_discounts(student_id);
 
+CREATE TABLE IF NOT EXISTS invoice_batches (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  academic_year_id uuid NOT NULL REFERENCES academic_years(id),
+  term_id         uuid REFERENCES terms(id),
+  criteria_json   jsonb,
+  status          varchar(16),
+  invoice_count   int NOT NULL DEFAULT 0,
+  total_minor     bigint NOT NULL DEFAULT 0,
+  run_by          uuid REFERENCES users(id),
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS invoices (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   school_id          uuid NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
@@ -397,7 +411,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   total_minor        bigint NOT NULL DEFAULT 0,
   paid_minor         bigint NOT NULL DEFAULT 0,
   balance_minor      bigint NOT NULL DEFAULT 0,
-  status             varchar(12) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','issued','partially_paid','paid','overdue','void')),
+  status             varchar(16) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','issued','partially_paid','paid','overdue','void')),
   generation_batch_id uuid REFERENCES invoice_batches(id),
   idempotency_key    varchar(96) NOT NULL UNIQUE,
   voided_reason      text,
@@ -460,18 +474,6 @@ CREATE TABLE IF NOT EXISTS ledger_entries (
   created_at         timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_ledger_entries_student ON ledger_entries(student_id, entry_date, id);
-
-CREATE TABLE IF NOT EXISTS invoice_batches (
-  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  academic_year_id uuid NOT NULL REFERENCES academic_years(id),
-  term_id         uuid REFERENCES terms(id),
-  criteria_json   jsonb,
-  status          varchar(16),
-  invoice_count   int NOT NULL DEFAULT 0,
-  total_minor     bigint NOT NULL DEFAULT 0,
-  run_by          uuid REFERENCES users(id),
-  created_at      timestamptz NOT NULL DEFAULT now()
-);
 
 -- ============================================================ Communication & platform
 CREATE TABLE IF NOT EXISTS announcements (

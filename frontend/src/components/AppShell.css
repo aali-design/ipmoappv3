@@ -1,0 +1,183 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background-color: var(--sch-sidebar-bg);
+  color: var(--sch-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--sch-zindex-sticky, 1020);
+  transition: transform var(--sch-motion-normal) var(--sch-motion-ease);
+}
+
+.app-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sch-space-2);
+  padding: var(--sch-space-4) var(--sch-space-4);
+  font-weight: var(--sch-font-weight-semibold);
+  font-size: var(--sch-font-size-lg);
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+}
+.app-sidebar-header .logo-mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--sch-radius-md);
+  background-color: var(--sch-color-brand-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.app-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sch-space-3) var(--sch-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-section-label {
+  font-size: var(--sch-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sch-sidebar-text-muted);
+  padding: var(--sch-space-3) var(--sch-space-3) var(--sch-space-1);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sch-space-3);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--sch-radius-md);
+  color: var(--sch-sidebar-text-muted);
+  font-size: var(--sch-font-size-md);
+  font-weight: var(--sch-font-weight-medium);
+  text-decoration: none;
+}
+.nav-item:hover {
+  background-color: rgb(255 255 255 / 0.06);
+  color: var(--sch-sidebar-text);
+  text-decoration: none;
+}
+.nav-item.active {
+  background-color: var(--sch-color-brand-600);
+  color: #fff;
+}
+
+.app-sidebar-footer {
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding: var(--sch-space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sch-space-2);
+}
+.app-sidebar-footer .user-meta {
+  flex: 1;
+  min-width: 0;
+}
+.app-sidebar-footer .user-name {
+  font-size: var(--sch-font-size-sm);
+  font-weight: var(--sch-font-weight-medium);
+  color: var(--sch-sidebar-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-sidebar-footer .user-role {
+  font-size: var(--sch-font-size-xs);
+  color: var(--sch-sidebar-text-muted);
+}
+.sidebar-logout {
+  background: none;
+  border: none;
+  color: var(--sch-sidebar-text-muted);
+  cursor: pointer;
+  padding: var(--sch-space-2);
+  border-radius: var(--sch-radius-md);
+  display: inline-flex;
+}
+.sidebar-logout:hover {
+  background-color: rgb(255 255 255 / 0.08);
+  color: var(--sch-sidebar-text);
+}
+
+.app-main {
+  flex: 1;
+  margin-left: 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--sch-zindex-sticky, 1020);
+  display: flex;
+  align-items: center;
+  gap: var(--sch-space-3);
+  padding: var(--sch-space-3) var(--sch-space-6);
+  background-color: var(--sch-bg-surface);
+  border-bottom: 1px solid var(--sch-border-default);
+}
+.app-topbar .school-name {
+  font-weight: var(--sch-font-weight-semibold);
+  color: var(--sch-text-primary);
+}
+.app-topbar .school-sub {
+  color: var(--sch-text-muted);
+  font-size: var(--sch-font-size-xs);
+}
+.app-content {
+  padding: var(--sch-space-6);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--sch-border-default);
+  border-radius: var(--sch-radius-md);
+  padding: var(--sch-space-2);
+  cursor: pointer;
+  color: var(--sch-text-primary);
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 0 0 24px rgb(0 0 0 / 0.3);
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .app-main {
+    margin-left: 0;
+  }
+  .sidebar-toggle {
+    display: inline-flex;
+  }
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgb(20 22 31 / 0.45);
+    z-index: calc(var(--sch-zindex-sticky, 1020) - 1);
+  }
+}

@@ -1,0 +1,51 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sch-space-6);
+  padding: var(--sch-space-6);
+  background-color: var(--sch-bg-canvas);
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sch-space-2);
+  font-size: var(--sch-font-size-2xl);
+  font-weight: var(--sch-font-weight-semibold);
+  color: var(--sch-text-primary);
+}
+.login-logo-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--sch-radius-lg);
+  background-color: var(--sch-color-brand-600);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card {
+  width: 100%;
+  max-width: 24rem;
+  background-color: var(--sch-bg-surface);
+  border: 1px solid var(--sch-border-default);
+  border-radius: var(--sch-radius-xl);
+  padding: var(--sch-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sch-space-4);
+  box-shadow: 0 4px 16px rgb(20 22 31 / 0.06);
+}
+.login-title {
+  font-size: var(--sch-font-size-2xl);
+}
+.login-subtitle {
+  color: var(--sch-text-muted);
+  font-size: var(--sch-font-size-md);
+  margin-bottom: var(--sch-space-2);
+}
+.login-footer {
+  font-size: var(--sch-font-size-sm);
+}

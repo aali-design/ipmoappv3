@@ -1,0 +1,128 @@
+/* Scholarion design tokens as CSS custom properties.
+ * Mirrors `tokens.ts` — components reference these variables (e.g. `var(--sch-color-brand-500)`)
+ * and never hard-code ad-hoc hex values, spacing or radii. */
+
+:root {
+  /* Brand */
+  --sch-color-brand-50: #eef4fb;
+  --sch-color-brand-100: #dbe8f6;
+  --sch-color-brand-200: #bdd3ee;
+  --sch-color-brand-300: #94b6e2;
+  --sch-color-brand-400: #6793d1;
+  --sch-color-brand-500: #4a77c0;
+  --sch-color-brand-600: #3a5fa8;
+  --sch-color-brand-700: #324d89;
+  --sch-color-brand-800: #2d4271;
+  --sch-color-brand-900: #2a3a5f;
+
+  /* Neutrals */
+  --sch-color-neutral-0: #ffffff;
+  --sch-color-neutral-50: #f7f8fa;
+  --sch-color-neutral-100: #eef0f4;
+  --sch-color-neutral-200: #dfe3ea;
+  --sch-color-neutral-300: #c6ccd8;
+  --sch-color-neutral-400: #a2aabd;
+  --sch-color-neutral-500: #7d879c;
+  --sch-color-neutral-600: #5f687d;
+  --sch-color-neutral-700: #4b5265;
+  --sch-color-neutral-800: #363c4c;
+  --sch-color-neutral-900: #232734;
+  --sch-color-neutral-950: #14161f;
+
+  /* Semantic */
+  --sch-color-success-50: #e8f8ef;
+  --sch-color-success-100: #c8efd9;
+  --sch-color-success-500: #1e9e57;
+  --sch-color-success-600: #17814a;
+  --sch-color-success-700: #14693e;
+
+  --sch-color-warning-50: #fdf4e7;
+  --sch-color-warning-100: #fbe6c4;
+  --sch-color-warning-500: #d97706;
+  --sch-color-warning-600: #b25f05;
+  --sch-color-warning-700: #924a04;
+
+  --sch-color-danger-50: #fdeef0;
+  --sch-color-danger-100: #fad6db;
+  --sch-color-danger-500: #d64545;
+  --sch-color-danger-600: #b33434;
+  --sch-color-danger-700: #8f2929;
+
+  --sch-color-info-50: #eaf4fb;
+  --sch-color-info-100: #d3e8f6;
+  --sch-color-info-500: #1f7fc4;
+  --sch-color-info-600: #1a67a3;
+
+  /* Spacing */
+  --sch-space-0: 0;
+  --sch-space-0-5: 0.125rem;
+  --sch-space-1: 0.25rem;
+  --sch-space-1-5: 0.375rem;
+  --sch-space-2: 0.5rem;
+  --sch-space-2-5: 0.625rem;
+  --sch-space-3: 0.75rem;
+  --sch-space-4: 1rem;
+  --sch-space-5: 1.25rem;
+  --sch-space-6: 1.5rem;
+  --sch-space-8: 2rem;
+  --sch-space-10: 2.5rem;
+  --sch-space-12: 3rem;
+  --sch-space-16: 4rem;
+  --sch-space-20: 5rem;
+  --sch-space-24: 6rem;
+
+  /* Radii */
+  --sch-radius-none: 0;
+  --sch-radius-sm: 0.25rem;
+  --sch-radius-md: 0.5rem;
+  --sch-radius-lg: 0.75rem;
+  --sch-radius-xl: 1rem;
+  --sch-radius-full: 9999px;
+
+  /* Typography */
+  --sch-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --sch-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --sch-font-size-xs: 0.75rem;
+  --sch-font-size-sm: 0.8125rem;
+  --sch-font-size-md: 0.875rem;
+  --sch-font-size-lg: 1rem;
+  --sch-font-size-xl: 1.125rem;
+  --sch-font-size-2xl: 1.375rem;
+  --sch-font-size-3xl: 1.75rem;
+  --sch-line-height-tight: 1.25;
+  --sch-line-height-normal: 1.5;
+  --sch-line-height-relaxed: 1.625;
+  --sch-font-weight-regular: 400;
+  --sch-font-weight-medium: 500;
+  --sch-font-weight-semibold: 600;
+  --sch-font-weight-bold: 700;
+
+  /* Breakpoints */
+  --sch-breakpoint-tablet: 768px;
+  --sch-breakpoint-desktop: 1024px;
+  --sch-breakpoint-wide: 1280px;
+
+  /* Motion */
+  --sch-motion-fast: 120ms;
+  --sch-motion-normal: 180ms;
+  --sch-motion-slow: 280ms;
+  --sch-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Focus ring */
+  --sch-focus-ring: 0 0 0 3px var(--sch-color-brand-100);
+
+  /* Derived surface aliases (light theme) */
+  --sch-bg-canvas: var(--sch-color-neutral-50);
+  --sch-bg-surface: var(--sch-color-neutral-0);
+  --sch-bg-surface-hover: var(--sch-color-neutral-50);
+  --sch-bg-inset: var(--sch-color-neutral-100);
+  --sch-text-primary: var(--sch-color-neutral-900);
+  --sch-text-secondary: var(--sch-color-neutral-600);
+  --sch-text-muted: var(--sch-color-neutral-500);
+  --sch-border-default: var(--sch-color-neutral-200);
+  --sch-border-strong: var(--sch-color-neutral-300);
+  --sch-sidebar-bg: var(--sch-color-neutral-950);
+  --sch-sidebar-text: var(--sch-color-neutral-200);
+  --sch-sidebar-text-muted: var(--sch-color-neutral-500);
+}
