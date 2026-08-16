@@ -41,6 +41,28 @@ compose project `ipmoapp_<slug>`, registers DNS + tunnel ingress, and prints the
 URL. `APP_SLUG` (a repo **variable**) pins a stable hostname; omit it and each
 deploy mints a new one.
 
+## Image rebuilds on redeploy
+
+`ipmo-publish` runs `docker compose up` **without** `--build`, so a redeploy to
+an already-published slug reuses the cached image keyed by compose project
+`ipmoapp_<slug>` — code changes silently never ship. Two ways to make changes
+take effect:
+
+1. **Per-commit image tag (this repo does this by default).**
+   `scripts/deploy-production.sh` bakes `git rev-parse --short HEAD` into the
+   `image:` tag in `docker-compose.yml` before shipping the bundle. Every new
+   commit yields a new image name, so `up` rebuilds it. Re-running the same
+   commit reuses the image (no-op). Override with `BUILD_TAG=…` to force a
+   rebuild without a code change.
+2. **The root fix** is to add `--build` (and `--pull always`) to the
+   `docker compose up` line in `/usr/local/bin/ipmo-publish` on the host. That
+   rebuilds in place with no image-name churn and no dangling images. The host
+   helper is root-owned and not editable by the deploy user, so this is a
+   founder/host-admin change (see the `deploy-to-ipmo-host` skill).
+
+The QA platform applies the same per-commit-tag pattern in `qa/deploy.sh` /
+`qa/docker-compose.yml` (deployed by `.github/workflows/deploy-qa.yml`).
+
 ## Secrets / variables required (repo Settings)
 
 | Name                   | Kind     | Used by      | Purpose                                    |

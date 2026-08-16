@@ -39,11 +39,30 @@ if [[ ! -f ipmo-app.json ]]; then
   echo '{ "service": "web", "port": 80 }' > ipmo-app.json
 fi
 
+# Build-busting image tag. The host helper runs `docker compose up` WITHOUT
+# `--build`, so a same-slug redeploy reuses the previously built image and code
+# changes silently never ship. Baking a per-commit tag into the image name
+# (see docker-compose.yml `image:`) makes every new commit a distinct image,
+# which forces `up` to rebuild it. Override with BUILD_TAG to force a rebuild
+# without a code change.
+TAG="${BUILD_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}"
+
+# Stage the bundle: copy the repo tree (dropping build cruft), then bake the
+# tag into the compose template so the substituted file ships at the bundle
+# root. Fail loudly if the placeholder survives — a static tag would collide
+# across deploys and reintroduce the cached-image bug.
+STAGE=$(mktemp -d)
 # -h dereferences symlinks: the publisher refuses archives containing links,
 # because it extracts as root.
-tar -czhf "$BUNDLE" \
-    --exclude=node_modules --exclude=.git --exclude=.github \
-    -C . .
+tar -cf - --exclude=node_modules --exclude=.git --exclude=.github \
+        --exclude=docker-compose.yml . \
+  | tar -xf - -C "$STAGE"
+sed "s/BUILD_TAG/${TAG}/g" docker-compose.yml > "$STAGE/docker-compose.yml"
+if grep -q 'BUILD_TAG' "$STAGE/docker-compose.yml"; then
+  echo "deploy: build tag substitution failed" >&2
+  exit 1
+fi
+tar -czhf "$BUNDLE" -C "$STAGE" .
 
 echo "deploy: bundle $(du -h "$BUNDLE" | cut -f1) -> $REMOTE"
 [[ -n "$SLUG" ]] || SLUG=$("${SSH[@]}" "$REMOTE" 'sudo /usr/local/bin/ipmo-publish new-slug')

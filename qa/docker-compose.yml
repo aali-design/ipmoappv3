@@ -17,6 +17,12 @@ services:
 
   backend:
     build: ./backend
+    # Per-commit image tag baked in by qa/deploy.sh. The host helper runs
+    # `docker compose up` WITHOUT `--build`, so a same-slug redeploy reuses the
+    # previously built image and code changes silently never ship. A distinct
+    # tag per commit makes the image name change on every code change, forcing
+    # `up` to rebuild it.
+    image: ipmoqa/backend:QA_BUILD_TAG
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-qa}:${POSTGRES_PASSWORD:-qa_dev_password}@db:5432/${POSTGRES_DB:-qa}
       PORT: 4000
@@ -41,6 +47,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: ipmoqa/frontend:QA_BUILD_TAG
     ports:
       - "8080:80"
     depends_on:
