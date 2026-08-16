@@ -1,0 +1,24 @@
+{
+  "name": "scholarion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scholarion — multi-tenant school management and student information system (SIS)",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "dev": "pnpm --parallel -r dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.6.0",
+    "eslint": "^9.6.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
