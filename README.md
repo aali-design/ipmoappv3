@@ -56,6 +56,16 @@ The CI pipeline runs **typecheck → lint → test → build** on every push to 
 - **Configuration lives at the repo root** (workspace, TS base, ESLint); per-app config is kept minimal and extends the base.
 - **No secrets in the repo.** Environment-specific values go in `.env` (gitignored) and are injected via the deploy path.
 
+## MVP core flows
+
+The first user-facing slices are auth/account basics and the primary domain (projects & tasks).
+
+- **Auth** (`/api/auth/*`): signup, login, logout, and `/me`. Passwords are hashed with `scrypt` (salted, constant-time compare). Sessions are opaque tokens stored in SQLite, delivered as an `HttpOnly; SameSite=Lax` cookie (`ipmo_session`).
+- **Projects** (`/api/projects`): list, create, read (with tasks), rename, delete — every project is scoped to its owning user.
+- **Tasks** (`/api/tasks`): create on a project, update title/status, delete. Statuses: `todo`, `in_progress`, `done`. All access is owner-scoped (cross-user access returns `404`).
+
+The web app (`apps/web`) is wired to the API through the Vite dev proxy and covers the whole loop: sign up / sign in → create a project → add tasks → mark them done. API auth and domain flows are covered by colocated Vitest suites (19 tests) that exercise the routes with an in-memory SQLite database.
+
 ## Deploy
 
 See the deploy task ([IPM-3](/IPM/issues/IPM-3)) for preview and production paths. The API runs a plain Node entry (`apps/api/src/server.ts`) and the web app builds to static assets (`apps/web/dist`), which keeps deployment options open.
