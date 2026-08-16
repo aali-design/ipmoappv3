@@ -51,6 +51,23 @@ deploy mints a new one.
 | `PRODUCTION_HOST_KEY`  | secret   | deploy.yml   | SSH private key for the deploy user        |
 | `APP_SLUG`             | variable | deploy.yml   | Stable 12-char `[a-z0-9]` production slug  |
 
+### Host-managed secrets — never regenerate them
+
+The `PRODUCTION_HOST*` (and matching `PREVIEW_HOST*`) secrets are **owned by
+the host, not by the repo**. The private key's public half is already
+installed in the host's `authorized_keys`; the host user, port, and
+DNS/tunnel routing are already provisioned.
+
+- **Do not run `ssh-keygen` and write a new key into `PRODUCTION_HOST_KEY`.**
+  A freshly generated key has no public half on the host, so every deploy
+  fails with `Permission denied (publickey)` — silently breaking a config
+  that already worked.
+- **Do not `gh secret set` over an existing deploy secret** unless the founder
+  has confirmed a host-level change.
+- If auth fails, treat "secret overwritten" as the first hypothesis, not
+  "host prerequisite missing." Escalate to the founder before changing any
+  deploy secret.
+
 ## Verifying a deploy
 
 Do not trust a green workflow alone — confirm all three:
