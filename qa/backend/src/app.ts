@@ -4,6 +4,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { err } from "./util/errors";
 import { getDb } from "./db/client";
 import { config } from "./config";
+import { getStartupError } from "./startupState";
 
 import authRouter from "./routes/auth";
 import orgRouter from "./routes/org";
@@ -31,10 +32,22 @@ export function createApp(): Express {
     getDb()
       .query("SELECT 1")
       .then(() => {
-        res.json({ status: "ok", db: "up", version: config.version, uptimeSeconds: Math.floor(process.uptime()) });
+        res.json({
+          status: "ok",
+          db: "up",
+          version: config.version,
+          uptimeSeconds: Math.floor(process.uptime()),
+          startupError: getStartupError(),
+        });
       })
       .catch(() => {
-        res.status(200).json({ status: "degraded", db: "down", version: config.version, uptimeSeconds: Math.floor(process.uptime()) });
+        res.status(200).json({
+          status: "degraded",
+          db: "down",
+          version: config.version,
+          uptimeSeconds: Math.floor(process.uptime()),
+          startupError: getStartupError(),
+        });
       });
   });
 

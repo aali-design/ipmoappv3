@@ -2,7 +2,7 @@ import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { config } from "../config";
 import { hashPassword } from "../util/password";
 import { log } from "../util/logger";
-import type { DB } from "./types";
+import type { DB, Queryable } from "./types";
 import { flakeScoreOf } from "../intelligence/flake";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -33,7 +33,7 @@ interface SeedContext {
   projectIds: string[];
 }
 
-async function ensureDemoUsers(db: DB): Promise<SeedContext> {
+async function ensureDemoUsers(db: Queryable): Promise<SeedContext> {
   // Idempotency guard: if the demo org already exists, nothing to do.
   const existing = await db.query("SELECT id FROM organizations WHERE slug = 'demo'");
   if (existing.rows.length > 0) {
@@ -99,7 +99,7 @@ async function ensureDemoUsers(db: DB): Promise<SeedContext> {
   };
 }
 
-async function seedDemoData(db: DB, ctx: SeedContext): Promise<void> {
+async function seedDemoData(db: Queryable, ctx: SeedContext): Promise<void> {
   const existingProj = await db.query(
     "SELECT id FROM projects WHERE organization_id = $1 AND key = 'WEB'",
     [ctx.orgId],
@@ -447,12 +447,18 @@ async function seedDemoData(db: DB, ctx: SeedContext): Promise<void> {
 
 export async function seed(db: DB, opts: { demoData?: boolean } = {}): Promise<SeedContext> {
   await waitForDb(db);
-  const ctx = await ensureDemoUsers(db);
-  if (opts.demoData !== false) {
-    await seedDemoData(db, ctx);
-    log.info("seed complete", { adminEmail: config.adminEmail });
-  } else {
-    log.info("seed complete (admin only)", { adminEmail: config.adminEmail });
-  }
-  return ctx;
+  // Wrap the whole seed in a single transaction so a mid-seed failure rolls
+  // back atomically (never leaving a half-seeded database that the idempotency
+  // guards would then skip on the next boot), and so the ~2000 inserts commit
+  // with a single fsync instead of one per statement.
+  return db.transaction(async (tx) => {
+    const ctx = await ensureDemoUsers(tx);
+    if (opts.demoData !== false) {
+      await seedDemoData(tx, ctx);
+      log.info("seed complete", { adminEmail: config.adminEmail });
+    } else {
+      log.info("seed complete (admin only)", { adminEmail: config.adminEmail });
+    }
+    return ctx;
+  });
 }
