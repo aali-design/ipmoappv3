@@ -134,13 +134,14 @@ async function seedDemoData(db: DB, ctx: SeedContext): Promise<void> {
   );
 
   const envWeb = randomUUID();
+  const envWebProd = randomUUID();
   const envApi = randomUUID();
   await db.query(
     `INSERT INTO environments (id, project_id, name, base_url) VALUES
       ($1,$2,'staging','https://staging.example.com'),
       ($3,$2,'production','https://app.example.com'),
       ($4,$5,'staging','https://api-staging.example.com')`,
-    [envWeb, projWeb, randomUUID(), projWeb, envApi, projApi],
+    [envWeb, projWeb, envWebProd, envApi, projApi],
   );
 
   // ---- Requirements (24) ----

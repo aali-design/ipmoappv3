@@ -1,0 +1,26 @@
+name: QA Remove
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Published slug to remove'
+        required: true
+
+jobs:
+  remove:
+    name: Remove published deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove deploy
+        working-directory: qa
+        run: ./remove.sh "${{ github.event.inputs.slug }}"
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_HOST_USER: ${{ secrets.PRODUCTION_HOST_USER }}
+          PRODUCTION_HOST_PORT: ${{ secrets.PRODUCTION_HOST_PORT }}
+          PRODUCTION_HOST_KEY: ${{ secrets.PRODUCTION_HOST_KEY }}
