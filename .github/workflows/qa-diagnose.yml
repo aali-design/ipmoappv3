@@ -1,0 +1,27 @@
+name: QA Diagnose
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Published slug to inspect'
+        required: true
+        default: 'dq4s6twbd1ah'
+
+jobs:
+  diagnose:
+    name: Dump host status + logs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dump logs
+        working-directory: qa
+        run: ./logs.sh "${{ github.event.inputs.slug }}"
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_HOST_USER: ${{ secrets.PRODUCTION_HOST_USER }}
+          PRODUCTION_HOST_PORT: ${{ secrets.PRODUCTION_HOST_PORT }}
+          PRODUCTION_HOST_KEY: ${{ secrets.PRODUCTION_HOST_KEY }}
