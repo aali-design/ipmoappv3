@@ -1,0 +1,29 @@
+# Version control & CI
+.git
+.gitignore
+.github
+.gitattributes
+
+# Dependencies & build output
+node_modules
+**/node_modules
+dist
+**/dist
+build
+**/build
+
+# Environment & secrets
+.env
+.env.*
+*.local
+
+# Logs & OS noise
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+
+# Docs & non-runtime files
+README.md
+docs
+*.md
