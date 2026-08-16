@@ -1,0 +1,69 @@
+name: Preview
+
+on:
+  pull_request:
+
+jobs:
+  preview:
+    name: Build and publish preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package preview
+        run: scripts/package-preview.sh
+        env:
+          PREVIEW_SLUG: preview-${{ github.event.pull_request.number }}
+
+      - name: Publish preview
+        run: scripts/publish-preview.sh
+        env:
+          PREVIEW_SLUG: preview-${{ github.event.pull_request.number }}
+          PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+          PREVIEW_HOST_USER: ${{ secrets.PREVIEW_HOST_USER }}
+          PREVIEW_HOST_KEY: ${{ secrets.PREVIEW_HOST_KEY }}
+          PREVIEW_BASE_URL: ${{ secrets.PREVIEW_BASE_URL }}
+
+      - name: Comment preview URL
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_BASE_URL: ${{ secrets.PREVIEW_BASE_URL }}
+          PREVIEW_SLUG: preview-${{ github.event.pull_request.number }}
+        with:
+          script: |
+            const base = process.env.PREVIEW_BASE_URL || '';
+            const slug = process.env.PREVIEW_SLUG;
+            const url = base ? `${base}/${slug}/` : null;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: url
+                ? `Preview published: ${url}\n\nThis preview reflects the changes in this PR against the live database.`
+                : `Preview build completed, but no \`PREVIEW_BASE_URL\` secret is configured so no public URL was published.`,
+            });

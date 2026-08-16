@@ -24,3 +24,7 @@ npm-debug.log*
 
 # Runtime
 .pnpm-store/
+
+# Local database
+data/
+.release/
