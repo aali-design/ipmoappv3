@@ -216,7 +216,7 @@ attendanceRouter.get(
 
     const filters: string[] = []
     const params: unknown[] = [termId]
-    let pi = 1
+    let pi = 2
 
     if (scope === 'section' && sectionId) {
       filters.push(`sec.id = $${++pi}`)

@@ -421,7 +421,11 @@ feesRouter.post(
       amount_minor: Number(result.amountMinor),
       allocated_minor: Number(result.allocatedMinor),
       unapplied_minor: Number(result.unappliedMinor),
-      allocations: result.allocations,
+      allocations: result.allocations.map((a) => ({
+        invoice_id: a.invoiceId,
+        amount_minor: Number(a.amountMinor),
+        invoice_status: a.invoiceStatus,
+      })),
     })
   }),
 )

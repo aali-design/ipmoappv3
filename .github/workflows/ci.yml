@@ -73,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run tests
-        run: pnpm test
+        run: pnpm test && pnpm --filter @scholarion/backend test:integration
         env:
           DATABASE_URL: postgres://scholarion:scholarion@localhost:5432/scholarion_test
           JWT_SECRET: ci-test-secret
