@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# VCS / CI
+.git
+.github
+
+# Local build output (regenerated inside the Docker build)
+**/dist
+.release
+.build
+
+# Local runtime data (SQLite dev db, etc.)
+data
+**/data
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / OS
+*.log
+.DS_Store

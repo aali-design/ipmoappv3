@@ -1,0 +1,23 @@
+# ipmo production stack: one image (API + built web app) served by Node.
+# Consumed by ipmo-publish on the host: it builds this stack, strips any
+# declared ports, and republishes the web service on a loopback port behind
+# the Cloudflare tunnel at https://{slug}.ipmo.app.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3000"
+      IPMO_DB_PATH: /data/ipmo.sqlite
+    volumes:
+      - ipmo_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  ipmo_data:

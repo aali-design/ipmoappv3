@@ -36,14 +36,16 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Package release
-        run: scripts/package-production.sh
-
       - name: Deploy production
+        id: deploy
         run: scripts/deploy-production.sh
         env:
           PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
           PRODUCTION_HOST_USER: ${{ secrets.PRODUCTION_HOST_USER }}
           PRODUCTION_HOST_PORT: ${{ secrets.PRODUCTION_HOST_PORT }}
           PRODUCTION_HOST_KEY: ${{ secrets.PRODUCTION_HOST_KEY }}
-          PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          APP_SLUG: ${{ vars.APP_SLUG }}
+
+      - name: Report deploy URL
+        if: always()
+        run: echo "Deployed to ${{ steps.deploy.outputs.url || '(see ipmo-publish output)' }}"
