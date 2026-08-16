@@ -19,11 +19,13 @@ trap 'rm -f "${KEY_FILE}"' EXIT
 printf '%s' "${PRODUCTION_HOST_KEY}" > "${KEY_FILE}"
 chmod 600 "${KEY_FILE}"
 
+PORT="${PRODUCTION_HOST_PORT:-22}"
+
 REMOTE_HOST="${PRODUCTION_HOST_USER}@${PRODUCTION_HOST}"
-SSH="ssh -i ${KEY_FILE} -o StrictHostKeyChecking=no"
+SSH="ssh -p ${PORT} -i ${KEY_FILE} -o StrictHostKeyChecking=no"
 
 "${SSH}" "${REMOTE_HOST}" "mkdir -p ~/app && rm -rf ~/app/current"
-scp -i "${KEY_FILE}" -o StrictHostKeyChecking=no -r "${APP}" "${REMOTE_HOST}:~/app/current"
+scp -P "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no -r "${APP}" "${REMOTE_HOST}:~/app/current"
 
 "${SSH}" "${REMOTE_HOST}" \
   "cd ~/app/current && pnpm install --prod --frozen-lockfile && \

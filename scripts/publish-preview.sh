@@ -20,10 +20,12 @@ trap 'rm -f "${KEY_FILE}"' EXIT
 printf '%s' "${PREVIEW_HOST_KEY}" > "${KEY_FILE}"
 chmod 600 "${KEY_FILE}"
 
+PORT="${PREVIEW_HOST_PORT:-22}"
+
 TARGET_DIR="previews/${SLUG}"
-ssh -i "${KEY_FILE}" -o StrictHostKeyChecking=no "${PREVIEW_HOST_USER}@${PREVIEW_HOST}" \
+ssh -p "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no "${PREVIEW_HOST_USER}@${PREVIEW_HOST}" \
   "mkdir -p ${TARGET_DIR} && rm -rf ${TARGET_DIR}/app"
-scp -i "${KEY_FILE}" -o StrictHostKeyChecking=no -r "${APP}" "${PREVIEW_HOST_USER}@${PREVIEW_HOST}:${TARGET_DIR}/app"
+scp -P "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no -r "${APP}" "${PREVIEW_HOST_USER}@${PREVIEW_HOST}:${TARGET_DIR}/app"
 
 URL="${PREVIEW_BASE_URL}/${SLUG}/"
 echo "Preview published: ${URL}"

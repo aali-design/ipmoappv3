@@ -46,6 +46,7 @@ jobs:
           PREVIEW_SLUG: preview-${{ github.event.pull_request.number }}
           PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
           PREVIEW_HOST_USER: ${{ secrets.PREVIEW_HOST_USER }}
+          PREVIEW_HOST_PORT: ${{ secrets.PREVIEW_HOST_PORT }}
           PREVIEW_HOST_KEY: ${{ secrets.PREVIEW_HOST_KEY }}
           PREVIEW_BASE_URL: ${{ secrets.PREVIEW_BASE_URL }}
 

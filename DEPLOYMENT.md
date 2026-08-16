@@ -18,10 +18,12 @@ deploy identical.
 | ---------------------- | ------------- | ----------------------------------------- |
 | `PREVIEW_HOST`         | preview.yml   | SSH host for preview static + API serving |
 | `PREVIEW_HOST_USER`    | preview.yml   | SSH user                                  |
+| `PREVIEW_HOST_PORT`    | preview.yml   | SSH port (optional, default 22)           |
 | `PREVIEW_HOST_KEY`     | preview.yml   | SSH private key                           |
 | `PREVIEW_BASE_URL`     | preview.yml   | Public base URL previews are served from  |
 | `PRODUCTION_HOST`      | deploy.yml    | SSH host for production                   |
 | `PRODUCTION_HOST_USER` | deploy.yml    | SSH user                                  |
+| `PRODUCTION_HOST_PORT` | deploy.yml    | SSH port (optional, default 22)           |
 | `PRODUCTION_HOST_KEY`  | deploy.yml    | SSH private key                           |
 | `PRODUCTION_BASE_URL`  | deploy.yml    | Public production URL                     |
 
