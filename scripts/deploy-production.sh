@@ -22,12 +22,12 @@ chmod 600 "${KEY_FILE}"
 PORT="${PRODUCTION_HOST_PORT:-22}"
 
 REMOTE_HOST="${PRODUCTION_HOST_USER}@${PRODUCTION_HOST}"
-SSH="ssh -p ${PORT} -i ${KEY_FILE} -o StrictHostKeyChecking=no"
 
-"${SSH}" "${REMOTE_HOST}" "mkdir -p ~/app && rm -rf ~/app/current"
+ssh -p "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no "${REMOTE_HOST}" \
+  "mkdir -p ~/app && rm -rf ~/app/current"
 scp -P "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no -r "${APP}" "${REMOTE_HOST}:~/app/current"
 
-"${SSH}" "${REMOTE_HOST}" \
+ssh -p "${PORT}" -i "${KEY_FILE}" -o StrictHostKeyChecking=no "${REMOTE_HOST}" \
   "cd ~/app/current && pnpm install --prod --frozen-lockfile && \
    (systemctl --user restart ipmo 2>/dev/null || pm2 restart ipmo 2>/dev/null || echo 'restart ipmo service manually')"
 
