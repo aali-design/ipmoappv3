@@ -16,7 +16,7 @@ APP="${ROOT}/.release/app"
 
 KEY_FILE="$(mktemp)"
 trap 'rm -f "${KEY_FILE}"' EXIT
-printf '%s' "${PRODUCTION_HOST_KEY}" > "${KEY_FILE}"
+printf '%s\n' "${PRODUCTION_HOST_KEY}" > "${KEY_FILE}"
 chmod 600 "${KEY_FILE}"
 
 PORT="${PRODUCTION_HOST_PORT:-22}"

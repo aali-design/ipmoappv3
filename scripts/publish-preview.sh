@@ -17,7 +17,7 @@ fi
 
 KEY_FILE="$(mktemp)"
 trap 'rm -f "${KEY_FILE}"' EXIT
-printf '%s' "${PREVIEW_HOST_KEY}" > "${KEY_FILE}"
+printf '%s\n' "${PREVIEW_HOST_KEY}" > "${KEY_FILE}"
 chmod 600 "${KEY_FILE}"
 
 PORT="${PREVIEW_HOST_PORT:-22}"
