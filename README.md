@@ -68,4 +68,18 @@ The web app (`apps/web`) is wired to the API through the Vite dev proxy and cove
 
 ## Deploy
 
-See the deploy task ([IPM-3](/IPM/issues/IPM-3)) for preview and production paths. The API runs a plain Node entry (`apps/api/src/server.ts`) and the web app builds to static assets (`apps/web/dist`), which keeps deployment options open.
+ipmo ships as a **single deployable unit**: the Hono API also serves the built
+web app from `apps/web/dist`, so a preview and a production deploy are
+identical. When `apps/web/dist` exists, `apps/api/src/server.ts` serves `/`
+(index.html, SPA) and the API (`/api`, `/health`) from one process.
+
+- **Preview** (`.github/workflows/preview.yml`): builds on every PR and
+  publishes `PREVIEW_BASE_URL/preview-<PR number>/`, then comments the URL.
+- **Production** (`.github/workflows/deploy.yml`): builds on every push to
+  `main` and deploys to `PRODUCTION_BASE_URL`.
+- **Container**: `Dockerfile` builds the single-process image (Node 24 + pnpm,
+  API + web on port `3000`, SQLite at `/data`).
+
+Local equivalents: `scripts/package-preview.sh`, `scripts/publish-preview.sh`,
+`scripts/deploy-production.sh`. Full details (secrets, host layout, run
+commands) in [`DEPLOYMENT.md`](DEPLOYMENT.md).
