@@ -10,10 +10,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="${ROOT}/.release/app"
 SLUG="${PREVIEW_SLUG:-preview}"
 
-: "${PREVIEW_HOST:?PREVIEW_HOST is required}"
-: "${PREVIEW_HOST_USER:?PREVIEW_HOST_USER is required}"
-: "${PREVIEW_HOST_KEY:?PREVIEW_HOST_KEY is required}"
-: "${PREVIEW_BASE_URL:?PREVIEW_BASE_URL is required}"
+if [[ -z "${PREVIEW_HOST:-}" || -z "${PREVIEW_HOST_USER:-}" || -z "${PREVIEW_HOST_KEY:-}" || -z "${PREVIEW_BASE_URL:-}" ]]; then
+  echo "Preview built but not published: PREVIEW_HOST/PREVIEW_HOST_USER/PREVIEW_HOST_KEY/PREVIEW_BASE_URL not configured."
+  exit 0
+fi
 
 KEY_FILE="$(mktemp)"
 trap 'rm -f "${KEY_FILE}"' EXIT
