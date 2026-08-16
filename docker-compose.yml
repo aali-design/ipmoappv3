@@ -12,6 +12,7 @@ services:
     # reuses the previously built image and code changes silently never ship.
     # A distinct tag per commit changes the image name, forcing `up` to rebuild.
     image: ipmo/web:BUILD_TAG
+    pull_policy: never
     environment:
       PORT: "3000"
       IPMO_DB_PATH: /data/ipmo.sqlite

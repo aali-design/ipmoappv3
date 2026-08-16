@@ -23,6 +23,7 @@ services:
     # tag per commit makes the image name change on every code change, forcing
     # `up` to rebuild it.
     image: ipmoqa/backend:QA_BUILD_TAG
+    pull_policy: never
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-qa}:${POSTGRES_PASSWORD:-qa_dev_password}@db:5432/${POSTGRES_DB:-qa}
       PORT: 4000
@@ -48,6 +49,7 @@ services:
   frontend:
     build: ./frontend
     image: ipmoqa/frontend:QA_BUILD_TAG
+    pull_policy: never
     ports:
       - "8080:80"
     depends_on:
