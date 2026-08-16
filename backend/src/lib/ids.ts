@@ -10,7 +10,7 @@ export async function nextCounter(
   db: DbClient,
   schoolId: string,
   name: string,
-  initial = 1n,
+  initial = 0n,
 ): Promise<bigint> {
   const ensure = await db.query(
     `INSERT INTO counters (school_id, name, value) VALUES ($1, $2, $3)
