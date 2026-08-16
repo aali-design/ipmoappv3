@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assemblies>
+  <assembly name="qa.unit.tests.dll" total="4" passed="3" failed="1" skipped="0" time="1.500">
+    <collection name="Qa.Tests.AuthTests" total="4" passed="3" failed="1" skipped="0" time="1.500">
+      <test name="Login_With_Valid_Credentials_Returns_Token" type="Qa.Tests.AuthTests" method="Login_With_Valid_Credentials_Returns_Token" time="0.400" result="Pass"/>
+      <test name="Login_With_Invalid_Credentials_Rejects" type="Qa.Tests.AuthTests" method="Login_With_Invalid_Credentials_Rejects" time="0.300" result="Pass"/>
+      <test name="Refresh_Expired_Token_Fails" type="Qa.Tests.AuthTests" method="Refresh_Expired_Token_Fails" time="0.500" result="Fail">
+        <failure>
+          <message>Assert.Equal() Failure
+Expected: 401
+Actual:   200</message>
+          <stack-trace>   at Qa.Tests.AuthTests.Refresh_Expired_Token_Fails() in /src/qa/AuthTests.cs:line 42</stack-trace>
+        </failure>
+      </test>
+      <test name="Logout_Invalidates_Session" type="Qa.Tests.AuthTests" method="Logout_Invalidates_Session" time="0.300" result="Pass"/>
+    </collection>
+  </assembly>
+</assemblies>

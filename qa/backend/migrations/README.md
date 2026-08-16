@@ -1,0 +1,6 @@
+-- Migrations are applied in lexicographic order by the startup runner
+-- (src/db/migrate.ts), AFTER the canonical `schema.sql` baseline. Each file
+-- must be idempotent (CREATE ... IF NOT EXISTS, guarded ALTERs, etc.).
+--
+-- Currently all DDL lives in the baseline `schema.sql`; add incremental
+-- migrations here as `002_<name>.sql`, `003_<name>.sql`, etc.

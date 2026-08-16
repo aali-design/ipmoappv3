@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2c1d6d22-1b1a-4c8a-9f0e-000000000001" name="regression@1 2024-01-15 10:00:00" runUser="BUILD\svc" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2024-01-15T10:05:00.0000000+00:00" queuing="2024-01-15T10:05:00.0000000+00:00" start="2024-01-15T10:06:00.0000000+00:00" finish="2024-01-15T10:07:00.0000000+00:00" />
+  <TestDefinitions>
+    <UnitTest name="Api_Get_Returns_200" storage="qa.dll" id="e1e1e1e1-0000-0000-0000-000000000001">
+      <Execution id="f1f1f1f1-0000-0000-0000-000000000001" />
+      <TestMethod codeBase="qa.dll" adapterTypeName="executor://mstestadapter/v2" className="Qa.Tests.ApiTests" name="Api_Get_Returns_200" />
+    </UnitTest>
+    <UnitTest name="Api_Post_Validates" storage="qa.dll" id="e1e1e1e1-0000-0000-0000-000000000002">
+      <Execution id="f1f1f1f1-0000-0000-0000-000000000002" />
+      <TestMethod codeBase="qa.dll" adapterTypeName="executor://mstestadapter/v2" className="Qa.Tests.ApiTests" name="Api_Post_Validates" />
+    </UnitTest>
+    <UnitTest name="Api_Delete_Forbidden" storage="qa.dll" id="e1e1e1e1-0000-0000-0000-000000000003">
+      <Execution id="f1f1f1f1-0000-0000-0000-000000000003" />
+      <TestMethod codeBase="qa.dll" adapterTypeName="executor://mstestadapter/v2" className="Qa.Tests.ApiTests" name="Api_Delete_Forbidden" />
+    </UnitTest>
+  </TestDefinitions>
+  <Results>
+    <UnitTestResult executionId="f1f1f1f1-0000-0000-0000-000000000001" testId="e1e1e1e1-0000-0000-0000-000000000001" testName="Api_Get_Returns_200" computerName="ci" duration="00:00:01.2500000" startTime="2024-01-15T10:06:00.0000000+00:00" endTime="2024-01-15T10:06:01.2500000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <UnitTestResult executionId="f1f1f1f1-0000-0000-0000-000000000002" testId="e1e1e1e1-0000-0000-0000-000000000002" testName="Api_Post_Validates" computerName="ci" duration="00:00:02.5000000" startTime="2024-01-15T10:06:01.2500000+00:00" endTime="2024-01-15T10:06:03.7500000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.AreEqual failed. Expected:&lt;400&gt;. Actual:&lt;500&gt;.</Message>
+          <StackTrace>   at Qa.Tests.ApiTests.Api_Post_Validates() in /src/qa/ApiTests.cs:line 88</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f1f1f1f1-0000-0000-0000-000000000003" testId="e1e1e1e1-0000-0000-0000-000000000003" testName="Api_Delete_Forbidden" computerName="ci" duration="00:00:00.7500000" startTime="2024-01-15T10:06:03.7500000+00:00" endTime="2024-01-15T10:06:04.5000000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </Results>
+</TestRun>

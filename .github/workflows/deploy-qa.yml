@@ -1,0 +1,28 @@
+name: Deploy QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'qa/**'
+      - '.github/workflows/deploy-qa.yml'
+
+jobs:
+  deploy:
+    name: Build and deploy QA platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy QA platform
+        working-directory: qa
+        run: ./deploy.sh
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_HOST_USER: ${{ secrets.PRODUCTION_HOST_USER }}
+          PRODUCTION_HOST_PORT: ${{ secrets.PRODUCTION_HOST_PORT }}
+          PRODUCTION_HOST_KEY: ${{ secrets.PRODUCTION_HOST_KEY }}
+          APP_SLUG: ${{ vars.QA_APP_SLUG }}

@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# env & secrets
+.env
+.env.local
+.env.*.local
+!/.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# coverage / test output
+coverage/
+.nyc_output/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# runtime artifacts
+backend/uploads/
+backend/storage/

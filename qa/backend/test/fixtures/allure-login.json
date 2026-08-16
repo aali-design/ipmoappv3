@@ -1,0 +1,38 @@
+[
+  {
+    "name": "should login successfully",
+    "status": "passed",
+    "stage": "finished",
+    "labels": [
+      { "name": "suite", "value": "Auth" },
+      { "name": "testClass", "value": "auth.LoginSpec" },
+      { "name": "package", "value": "auth" }
+    ],
+    "time": { "start": 1700000000000, "stop": 1700000000500, "duration": 500 }
+  },
+  {
+    "name": "should reject invalid password",
+    "status": "failed",
+    "stage": "finished",
+    "labels": [
+      { "name": "suite", "value": "Auth" },
+      { "name": "testClass", "value": "auth.LoginSpec" },
+      { "name": "package", "value": "auth" }
+    ],
+    "statusDetails": {
+      "message": "AssertionError: expected '401' to equal '200'",
+      "trace": "at auth.LoginSpec.should reject invalid password (auth/login.spec.js:24:16)"
+    },
+    "time": { "start": 1700000000500, "stop": 1700000000800, "duration": 300 }
+  },
+  {
+    "name": "should skip disabled feature",
+    "status": "skipped",
+    "stage": "finished",
+    "labels": [
+      { "name": "suite", "value": "Auth" },
+      { "name": "testClass", "value": "auth.LoginSpec" }
+    ],
+    "time": { "start": 1700000000800, "stop": 1700000000800, "duration": 0 }
+  }
+]
