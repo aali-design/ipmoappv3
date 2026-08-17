@@ -94,10 +94,14 @@ export function CaseDetailPage() {
         <Tabs
           tabs={[
             { id: "steps", label: "Steps" },
-            { id: "versions", label: "Versions" },
-            { id: "requirements", label: "Requirements" },
-            { id: "history", label: "Execution history" },
-            { id: "defects", label: "Defects" },
+            ...(isNew
+              ? []
+              : [
+                  { id: "versions", label: "Versions" },
+                  { id: "requirements", label: "Requirements" },
+                  { id: "history", label: "Execution history" },
+                  { id: "defects", label: "Defects" },
+                ]),
           ]}
           active={tab}
           onChange={(id) => setTab(id as TabId)}
