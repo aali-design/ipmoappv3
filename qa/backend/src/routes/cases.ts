@@ -28,7 +28,7 @@ const caseBodySchema = z.object({
   steps: z.array(stepSchema).optional(),
   expectedResult: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  estimatedMinutes: z.number().int().positive().optional(),
+  estimatedMinutes: z.number().int().positive().nullish(),
   requirementIds: z.array(z.string().uuid()).optional(),
   changeNote: z.string().optional(),
 });
@@ -73,7 +73,7 @@ r.patch("/cases/:id", requireProjectMember(projectFromCase()), requireRole(WRITE
       steps: z.array(stepSchema).optional(),
       expectedResult: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      estimatedMinutes: z.number().int().positive().optional(),
+      estimatedMinutes: z.number().int().positive().nullish(),
       changeNote: z.string().optional(),
     }),
     req.body,

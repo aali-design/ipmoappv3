@@ -174,6 +174,10 @@ export async function createRun(input: {
     created.executions = count;
   });
 
+  // Initialize aggregate stats so run detail shows a correct "0 / N executed"
+  // progress bar immediately (and total matches without a separate fetch).
+  await refreshRunStats(runId);
+
   return { id: runId, status: "planned", executionCount: created.executions };
 }
 
@@ -326,6 +330,10 @@ export async function patchExecution(input: {
     ],
   );
 
+  // Keep the run's aggregate stats fresh so live progress (executed / total)
+  // advances as soon as an execution is marked, not only on run completion.
+  await refreshRunStats(e.run_id);
+
   return { id: input.executionId, status: newStatus };
 }
 
@@ -364,5 +372,6 @@ export async function retestExecution(input: { projectId: string; executionId: s
      VALUES ($1,$2,$3,$4,$5,'untested',$6)`,
     [newId, e.run_id, e.test_case_id, e.case_version_id, e.assigned_to, attempt],
   );
+  await refreshRunStats(e.run_id);
   return { id: newId, testCaseId: e.test_case_id, attempt };
 }

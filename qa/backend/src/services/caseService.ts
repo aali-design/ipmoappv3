@@ -27,7 +27,7 @@ interface CaseInput {
   steps?: Step[];
   expectedResult?: string;
   tags?: string[];
-  estimatedMinutes?: number;
+  estimatedMinutes?: number | null;
   requirementIds?: string[];
   changeNote?: string;
   authorId?: string | null;
@@ -241,7 +241,7 @@ export async function updateCase(input: {
   steps?: Step[];
   expectedResult?: string;
   tags?: string[];
-  estimatedMinutes?: number;
+  estimatedMinutes?: number | null;
   changeNote?: string;
   authorId?: string | null;
 }) {
