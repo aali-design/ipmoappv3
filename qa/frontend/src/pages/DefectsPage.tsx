@@ -11,19 +11,19 @@ import type {
   DefectSeverity,
   DefectStatus,
 } from "@/lib/types";
-import { formatBytes, formatRelative, titleCase } from "@/lib/utils";
+import { formatRelative, titleCase } from "@/lib/utils";
 import {
   Button,
   DefectStatusBadge,
   EmptyState,
   ErrorState,
+  ExecutionBadge,
   LoadingState,
   PageHeader,
   PriorityBadge,
   SeverityBadge,
 } from "@/components/ui";
 import { Drawer, Field, Tabs } from "@/components/ui";
-import { IconPaperclip } from "@/components/ui";
 
 const STATUS_COLUMNS: DefectStatus[] = [
   "new",
@@ -230,7 +230,7 @@ function KanbanBoard({
                   <div className="text-sm font-medium truncate mt-1">{d.title}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <PriorityBadge priority={d.priority} />
-                    {d.escaped_to_prod ? <span className="badge badge--danger">escaped</span> : null}
+                    {d.escapedToProd ? <span className="badge badge--danger">escaped</span> : null}
                   </div>
                 </div>
               ))}
@@ -275,7 +275,7 @@ function DefectsTable({
               <td><SeverityBadge severity={d.severity} /></td>
               <td><PriorityBadge priority={d.priority} /></td>
               <td><DefectStatusBadge status={d.status} /></td>
-              <td className="text-muted">{formatRelative(d.updated_at)}</td>
+              <td className="text-muted">{formatRelative(d.updatedAt)}</td>
             </tr>
           ))}
         </tbody>
@@ -360,10 +360,10 @@ function DefectDrawer({
           <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
             <Meta label="Priority"><PriorityBadge priority={defect.priority} /></Meta>
             <Meta label="Severity"><SeverityBadge severity={defect.severity} /></Meta>
-            <Meta label="Found in build"><span className="mono">{defect.found_in_build ?? "—"}</span></Meta>
-            <Meta label="Reporter"><span>{defect.reporter_name ?? "—"}</span></Meta>
-            <Meta label="Assignee"><span>{defect.assignee_name ?? "—"}</span></Meta>
-            <Meta label="SLA due"><span>{formatRelative(defect.sla_due_at)}</span></Meta>
+            <Meta label="Found in build"><span className="mono">{defect.foundInBuildId ?? "—"}</span></Meta>
+            <Meta label="Reporter"><span>{defect.reporterEmail ?? "—"}</span></Meta>
+            <Meta label="Assignee"><span>{defect.assigneeEmail ?? "—"}</span></Meta>
+            <Meta label="SLA due"><span>{formatRelative(defect.slaDueAt)}</span></Meta>
           </div>
 
           {can("triage_defects") ? (
@@ -404,19 +404,19 @@ function DefectDrawer({
               {defect.events?.map((ev) => (
                 <div key={ev.id} className="flex gap-3">
                   <span className="text-muted text-xs mono" style={{ width: 120, flexShrink: 0 }}>
-                    {formatRelative(ev.created_at)}
+                    {formatRelative(ev.createdAt)}
                   </span>
                   <div className="min-w-0">
                     <div className="text-sm">
-                      {ev.from_status ? (
+                      {ev.fromStatus ? (
                         <span>
-                          <span className="text-muted">{titleCase(ev.from_status)}</span> →{" "}
-                          <span className="font-semibold">{titleCase(ev.to_status)}</span>
+                          <span className="text-muted">{titleCase(ev.fromStatus)}</span> →{" "}
+                          <span className="font-semibold">{titleCase(ev.toStatus)}</span>
                         </span>
                       ) : (
-                        <span className="font-semibold">{titleCase(ev.to_status)}</span>
+                        <span className="font-semibold">{titleCase(ev.toStatus)}</span>
                       )}
-                      {ev.actor_name ? <span className="text-muted"> · {ev.actor_name}</span> : null}
+                      {ev.actorEmail ? <span className="text-muted"> · {ev.actorEmail}</span> : null}
                     </div>
                     {ev.comment ? <p className="text-sm text-secondary mt-1">{ev.comment}</p> : null}
                   </div>
@@ -430,32 +430,14 @@ function DefectDrawer({
               <h3 className="panel__title">Linked executions</h3>
             </div>
             <div className="panel__body">
-              {defect.executions && defect.executions.length === 0 ? (
+              {defect.linkedExecutions && defect.linkedExecutions.length === 0 ? (
                 <p className="text-muted text-sm">No linked executions.</p>
               ) : null}
-              {defect.executions?.map((ex) => (
-                <div key={ex.id} className="flex items-center gap-2 py-1">
-                  <span className="mono text-xs text-muted">{ex.test_case?.ref ?? ex.test_case_id.slice(0, 8)}</span>
-                  <span className="text-sm flex-1">{ex.test_case?.title ?? "—"}</span>
-                  <span className="text-muted text-xs">{formatRelative(ex.executed_at)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel__header">
-              <h3 className="panel__title">Attachments</h3>
-            </div>
-            <div className="panel__body">
-              {defect.attachments && defect.attachments.length === 0 ? (
-                <p className="text-muted text-sm">No attachments.</p>
-              ) : null}
-              {defect.attachments?.map((a) => (
-                <div key={a.id} className="flex items-center gap-2 py-1">
-                  <IconPaperclip width={14} height={14} />
-                  <span className="text-sm flex-1">{a.filename}</span>
-                  <span className="text-muted text-xs">{formatBytes(a.size_bytes)}</span>
+              {defect.linkedExecutions?.map((ex) => (
+                <div key={ex.executionId} className="flex items-center gap-2 py-1">
+                  <span className="mono text-xs text-muted">{ex.caseRef ?? ex.testCaseId.slice(0, 8)}</span>
+                  <ExecutionBadge status={ex.status} />
+                  <span className="text-muted text-xs ml-auto">{formatRelative(ex.executedAt)}</span>
                 </div>
               ))}
             </div>

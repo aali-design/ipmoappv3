@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApi } from "@/lib/useApi";
-import { api, buildQuery } from "@/lib/apiClient";
+import { api } from "@/lib/apiClient";
 import { useProject } from "@/lib/project";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/Toast";
@@ -9,7 +9,6 @@ import type {
   ApiKey,
   AuditLogEntry,
   Environment,
-  Paginated,
   ProjectMember,
   Role,
   User,
@@ -23,7 +22,6 @@ import {
   LoadingState,
   Modal,
   PageHeader,
-  Pagination,
 } from "@/components/ui";
 import { Field, Tabs } from "@/components/ui";
 import { IconPlus } from "@/components/ui";
@@ -76,7 +74,7 @@ function TeamTab() {
   const changeRole = async (user: User, role: Role) => {
     try {
       await api.patch(`/users/${user.id}`, { role });
-      success("Role updated", `${user.full_name} → ${roleLabels[role]}`);
+      success("Role updated", `${user.fullName} → ${roleLabels[role]}`);
       reload();
     } catch (err) {
       toastError("Update failed", (err as Error).message);
@@ -110,7 +108,7 @@ function TeamTab() {
             <tbody>
               {data.map((u) => (
                 <tr key={u.id}>
-                  <td className="font-semibold">{u.full_name}</td>
+                  <td className="font-semibold">{u.fullName}</td>
                   <td className="mono">{u.email}</td>
                   <td>
                     {can("manage_project") ? (
@@ -119,7 +117,7 @@ function TeamTab() {
                         style={{ width: 140, padding: "var(--space-1) var(--space-2)" }}
                         value={u.role}
                         onChange={(e) => changeRole(u, e.target.value as Role)}
-                        aria-label={`Role for ${u.full_name}`}
+                        aria-label={`Role for ${u.fullName}`}
                       >
                         {Object.entries(roleLabels).map(([r, label]) => (
                           <option key={r} value={r}>{label}</option>
@@ -130,11 +128,11 @@ function TeamTab() {
                     )}
                   </td>
                   <td>
-                    <span className={`badge ${u.is_active ? "badge--success" : "badge--neutral"}`}>
-                      {u.is_active ? "Active" : "Inactive"}
+                    <span className={`badge ${u.isActive ? "badge--success" : "badge--neutral"}`}>
+                      {u.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="text-muted">{formatRelative(u.last_login_at)}</td>
+                  <td className="text-muted">{formatRelative(u.lastLoginAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -167,13 +165,14 @@ function InviteUserModal({
   const { error: toastError } = useToast();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("tester");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     try {
-      await api.post("/users", { email, full_name: fullName, role });
+      await api.post("/users", { email, password, fullName, role });
       onSaved();
     } catch (err) {
       toastError("Invite failed", (err as Error).message);
@@ -201,6 +200,15 @@ function InviteUserModal({
         <Field label="Full name" required>
           <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </Field>
+        <Field label="Password" required help="Minimum 8 characters.">
+          <input
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+        </Field>
         <Field label="Role">
           <select className="select" value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {Object.entries(roleLabels).map(([r, label]) => (
@@ -224,9 +232,9 @@ function MembersTab() {
     [projectId],
   );
 
-  const update = async (m: ProjectMember, project_role: Role) => {
+  const update = async (m: ProjectMember, projectRole: Role) => {
     try {
-      await api.post(`/projects/${projectId}/members`, { user_id: m.user_id, project_role });
+      await api.post(`/projects/${projectId}/members`, { email: m.email, projectRole });
       success("Member updated");
       reload();
     } catch (err) {
@@ -236,7 +244,7 @@ function MembersTab() {
 
   const remove = async (m: ProjectMember) => {
     try {
-      await api.del(`/projects/${projectId}/members/${m.user_id}`);
+      await api.del(`/projects/${projectId}/members/${m.userId}`);
       success("Member removed");
       reload();
     } catch (err) {
@@ -261,24 +269,24 @@ function MembersTab() {
             </thead>
             <tbody>
               {data.map((m) => (
-                <tr key={m.user_id}>
-                  <td className="font-semibold">{m.full_name ?? "—"}</td>
-                  <td className="mono">{m.email ?? m.user_id}</td>
+                <tr key={m.userId}>
+                  <td className="font-semibold">{m.fullName ?? "—"}</td>
+                  <td className="mono">{m.email ?? m.userId}</td>
                   <td>
                     {can("manage_project") ? (
                       <select
                         className="select"
                         style={{ width: 140, padding: "var(--space-1) var(--space-2)" }}
-                        value={m.project_role}
+                        value={m.projectRole}
                         onChange={(e) => update(m, e.target.value as Role)}
-                        aria-label={`Project role for ${m.full_name ?? m.user_id}`}
+                        aria-label={`Project role for ${m.fullName ?? m.userId}`}
                       >
                         {Object.entries(roleLabels).map(([r, label]) => (
                           <option key={r} value={r}>{label}</option>
                         ))}
                       </select>
                     ) : (
-                      <span>{roleLabels[m.project_role]}</span>
+                      <span>{roleLabels[m.projectRole]}</span>
                     )}
                   </td>
                   <td>
@@ -317,7 +325,7 @@ function EnvironmentsTab() {
   const create = async () => {
     setBusy(true);
     try {
-      await api.post(`/projects/${projectId}/environments`, { name, base_url: baseUrl, notes });
+      await api.post(`/projects/${projectId}/environments`, { name, baseUrl, notes });
       success("Environment created");
       setCreateOpen(false);
       setName("");
@@ -357,7 +365,7 @@ function EnvironmentsTab() {
               {data.map((env) => (
                 <tr key={env.id}>
                   <td className="font-semibold">{env.name}</td>
-                  <td className="mono">{env.base_url ?? "—"}</td>
+                  <td className="mono">{env.baseUrl ?? "—"}</td>
                   <td className="text-muted">{env.notes ?? "—"}</td>
                 </tr>
               ))}
@@ -464,16 +472,16 @@ function ApiKeysTab() {
               {data.map((k) => (
                 <tr key={k.id}>
                   <td className="font-semibold">{k.name}</td>
-                  <td className="mono">{k.key_prefix}…</td>
+                  <td className="mono">{k.keyPrefix}…</td>
                   <td>{k.scopes.join(", ")}</td>
-                  <td className="text-muted">{k.expires_at ? formatRelative(k.expires_at) : "Never"}</td>
+                  <td className="text-muted">{k.expiresAt ? formatRelative(k.expiresAt) : "Never"}</td>
                   <td>
-                    <span className={`badge ${k.revoked_at ? "badge--danger" : "badge--success"}`}>
-                      {k.revoked_at ? "Revoked" : "Active"}
+                    <span className={`badge ${k.revokedAt ? "badge--danger" : "badge--success"}`}>
+                      {k.revokedAt ? "Revoked" : "Active"}
                     </span>
                   </td>
                   <td>
-                    {can("manage_project") && !k.revoked_at ? (
+                    {can("manage_project") && !k.revokedAt ? (
                       <Button size="xs" variant="ghost" onClick={() => revoke(k)}>
                         Revoke
                       </Button>
@@ -504,11 +512,11 @@ function ApiKeysTab() {
           <Field label="Scopes" help="Comma-separated (e.g. ingest).">
             <input className="input mono" value={scopes} onChange={(e) => setScopes(e.target.value)} />
           </Field>
-          {newKey?.plaintext ? (
+          {newKey?.key ? (
             <div className="panel" style={{ background: "var(--color-warningMuted)", borderColor: "var(--color-warning)" }}>
               <div className="panel__body">
                 <p className="text-sm text-warning font-semibold">Copy this key now — it is shown only once.</p>
-                <code className="mono" style={{ wordBreak: "break-all" }}>{newKey.plaintext}</code>
+                <code className="mono" style={{ wordBreak: "break-all" }}>{newKey.key}</code>
               </div>
             </div>
           ) : null}
@@ -589,8 +597,8 @@ function WebhooksTab() {
                   <td className="mono">{w.url}</td>
                   <td>{w.events.join(", ")}</td>
                   <td>
-                    <span className={`badge ${w.is_active ? "badge--success" : "badge--neutral"}`}>
-                      {w.is_active ? "Active" : "Inactive"}
+                    <span className={`badge ${w.isActive ? "badge--success" : "badge--neutral"}`}>
+                      {w.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td>
@@ -634,14 +642,13 @@ function WebhooksTab() {
 /* ---- Audit log ---- */
 
 function AuditTab() {
-  const [page, setPage] = useState(1);
   const [action, setAction] = useState("");
-  const { data, loading, error, reload } = useApi<Paginated<AuditLogEntry>>(
-    () =>
-      api.get(
-        `/audit-log${buildQuery({ page, pageSize: 50, action: action || undefined })}`,
-      ),
-    [page, action],
+  const { data, loading, error, reload } = useApi<AuditLogEntry[]>(
+    () => api.get(`/audit-log?limit=200`),
+    [],
+  );
+  const entries = (data ?? []).filter(
+    (e) => !action || e.action.toLowerCase().includes(action.toLowerCase()),
   );
 
   return (
@@ -652,53 +659,47 @@ function AuditTab() {
           style={{ width: 240 }}
           placeholder="Filter by action…"
           value={action}
-          onChange={(e) => {
-            setAction(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setAction(e.target.value)}
           aria-label="Filter audit log by action"
         />
       </div>
       {loading ? <LoadingState /> : null}
       {error ? <ErrorState error={error} onRetry={reload} /> : null}
-      {data && data.items.length === 0 ? (
+      {data && entries.length === 0 ? (
         <EmptyState title="No audit entries" />
       ) : null}
-      {data && data.items.length > 0 ? (
-        <>
-          <div className="table-wrap">
-            <table className="table table--dense">
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Actor</th>
-                  <th>Action</th>
-                  <th>Entity</th>
-                  <th>Details</th>
+      {data && entries.length > 0 ? (
+        <div className="table-wrap">
+          <table className="table table--dense">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="text-muted" style={{ whiteSpace: "nowrap" }}>
+                    {formatRelative(entry.createdAt)}
+                  </td>
+                  <td className="mono text-xs">{entry.actorId ? entry.actorId.slice(0, 8) : "—"}</td>
+                  <td><span className="badge badge--info">{entry.action}</span></td>
+                  <td className="mono text-xs">
+                    {entry.entityType ?? "—"}
+                    {entry.entityId ? ` ${entry.entityId.slice(0, 8)}` : ""}
+                  </td>
+                  <td className="mono text-xs text-muted truncate" style={{ maxWidth: 320 }}>
+                    {entry.metadata ? JSON.stringify(entry.metadata) : "—"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {data.items.map((entry) => (
-                  <tr key={entry.id}>
-                    <td className="text-muted" style={{ whiteSpace: "nowrap" }}>
-                      {formatRelative(entry.created_at)}
-                    </td>
-                    <td>{entry.actor_name ?? "—"}</td>
-                    <td><span className="badge badge--info">{entry.action}</span></td>
-                    <td className="mono text-xs">
-                      {entry.entity_type ?? "—"}
-                      {entry.entity_id ? ` ${entry.entity_id.slice(0, 8)}` : ""}
-                    </td>
-                    <td className="mono text-xs text-muted truncate" style={{ maxWidth: 320 }}>
-                      {entry.metadata_json ? JSON.stringify(entry.metadata_json) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={page} pageSize={50} total={data.total} onPage={setPage} />
-        </>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
     </>
   );

@@ -4,7 +4,7 @@ import { api } from "@/lib/apiClient";
 import { useCurrentProjectId } from "@/lib/project";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/Toast";
-import type { GatePolicy, Release } from "@/lib/types";
+import type { GateCriterion, GatePolicy, GateValue, Release } from "@/lib/types";
 import { formatRelative, titleCase } from "@/lib/utils";
 import {
   Button,
@@ -23,6 +23,12 @@ const DEFAULT_POLICY: GatePolicy = {
   maxOpenCritical: 0,
   minRequirementCoverage: 0.9,
 };
+
+function formatGateValue(v: GateValue): string {
+  if (Array.isArray(v)) return v.join(", ");
+  if (v !== null && typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
 
 export function ReleasesPage() {
   const projectId = useCurrentProjectId();
@@ -88,7 +94,7 @@ function ReleaseDetail({
   const { success, error: toastError } = useToast();
   const [evaluating, setEvaluating] = useState(false);
   const [policy, setPolicy] = useState<GatePolicy>(
-    release.gate_policy_json ?? { ...DEFAULT_POLICY },
+    release.gatePolicy ?? { ...DEFAULT_POLICY },
   );
   const [saving, setSaving] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -97,10 +103,10 @@ function ReleaseDetail({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setPolicy(release.gate_policy_json ?? { ...DEFAULT_POLICY });
-  }, [release.id, release.gate_policy_json]);
+    setPolicy(release.gatePolicy ?? { ...DEFAULT_POLICY });
+  }, [release.id, release.gatePolicy]);
 
-  const result = release.gate_result_json;
+  const result = release.gateResult;
 
   const evaluate = async () => {
     setEvaluating(true);
@@ -118,7 +124,7 @@ function ReleaseDetail({
   const savePolicy = async () => {
     setSaving(true);
     try {
-      await api.patch(`/releases/${release.id}`, { gate_policy_json: policy });
+      await api.patch(`/releases/${release.id}`, { gatePolicy: policy });
       success("Policy saved");
       onChanged();
     } catch (err) {
@@ -210,12 +216,12 @@ function ReleaseDetail({
               policy {result.policyHash?.slice(0, 12)}
             </span>
           </div>
-          {result.override ? (
+          {result.waivedBy ? (
             <div className="panel__body" style={{ borderBottom: "1px solid var(--color-border)" }}>
               <p className="text-sm text-warning">
-                Waived by {result.override.byName ?? result.override.by} — {result.override.reason}
+                Waived by {result.waivedBy.name} — {result.waiverReason}
               </p>
-              <p className="text-xs text-muted mt-1">{formatRelative(result.override.at)}</p>
+              <p className="text-xs text-muted mt-1">{formatRelative(result.waivedAt)}</p>
             </div>
           ) : null}
           <div className="panel__body" style={{ padding: 0 }}>
@@ -308,13 +314,7 @@ function FragmentRow({
   open,
   onToggle,
 }: {
-  criterion: {
-    key: string;
-    required: number;
-    actual: number;
-    passed: boolean;
-    evidence: Record<string, unknown>;
-  };
+  criterion: GateCriterion;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -333,8 +333,8 @@ function FragmentRow({
           />
         </td>
         <td className="mono">{criterion.key}</td>
-        <td className="mono">{criterion.required}</td>
-        <td className="mono">{criterion.actual}</td>
+        <td className="mono">{formatGateValue(criterion.required)}</td>
+        <td className="mono">{formatGateValue(criterion.actual)}</td>
         <td>
           <Badge tone={criterion.passed ? "success" : "danger"}>
             {criterion.passed ? "Pass" : "Fail"}

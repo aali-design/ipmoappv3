@@ -15,7 +15,6 @@ import type {
   TestCaseVersion,
 } from "@/lib/types";
 import { formatDuration, formatRelative, titleCase } from "@/lib/utils";
-import { Sparkline } from "@/components/charts";
 import {
   Button,
   CriticalityBadge,
@@ -79,9 +78,9 @@ export function CaseDetailPage() {
         actions={
           !isNew ? (
             <div className="flex items-center gap-2">
-              {testCase?.version?.version != null ? (
+              {testCase?.currentVersion != null ? (
                 <span className="text-muted text-sm mono">
-                  v{testCase.version?.version}
+                  v{testCase.currentVersion}
                 </span>
               ) : null}
               <Button variant="ghost" onClick={() => navigate("/cases")}>
@@ -137,17 +136,17 @@ export function CaseDetailPage() {
 
 interface CaseDraft {
   title: string;
-  folder_path: string;
+  folderPath: string;
   priority: string;
   type: string;
-  automation_status: string;
-  automation_key: string;
+  automationStatus: string;
+  automationKey: string;
   tags: string;
   preconditions: string;
-  expected_result: string;
-  estimated_minutes: string;
+  expectedResult: string;
+  estimatedMinutes: string;
   steps: CaseStep[];
-  change_note: string;
+  changeNote: string;
 }
 
 function StepsTab({
@@ -168,39 +167,28 @@ function StepsTab({
   const { can } = useAuth();
   const editable = can("author_cases");
 
-  const current = testCase?.version ?? testCase?.versions?.[0] ?? null;
-
-  const [draft, setDraft] = useState<CaseDraft>({
+  const buildDraft = (): CaseDraft => ({
     title: testCase?.title ?? "",
-    folder_path: testCase?.folder_path ?? "",
+    folderPath: testCase?.folderPath ?? "",
     priority: testCase?.priority ?? "medium",
     type: testCase?.type ?? "functional",
-    automation_status: testCase?.automation_status ?? "manual",
-    automation_key: testCase?.automation_key ?? "",
-    tags: current?.tags.join(", ") ?? "",
-    preconditions: current?.preconditions ?? "",
-    expected_result: current?.expected_result ?? "",
-    estimated_minutes: String(current?.estimated_minutes ?? ""),
-    steps: current?.steps_json ?? [{ index: 1, action: "", expected: "" }],
-    change_note: "",
+    automationStatus: testCase?.automationStatus ?? "manual",
+    automationKey: testCase?.automationKey ?? "",
+    tags: (testCase?.tags ?? []).join(", "),
+    preconditions: testCase?.preconditions ?? "",
+    expectedResult: testCase?.expectedResult ?? "",
+    estimatedMinutes: String(testCase?.estimatedMinutes ?? ""),
+    steps: (testCase?.steps ?? []).length > 0
+      ? (testCase?.steps as CaseStep[])
+      : [{ index: 1, action: "", expected: "" }],
+    changeNote: "",
   });
+
+  const [draft, setDraft] = useState<CaseDraft>(buildDraft);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setDraft({
-      title: testCase?.title ?? "",
-      folder_path: testCase?.folder_path ?? "",
-      priority: testCase?.priority ?? "medium",
-      type: testCase?.type ?? "functional",
-      automation_status: testCase?.automation_status ?? "manual",
-      automation_key: testCase?.automation_key ?? "",
-      tags: current?.tags.join(", ") ?? "",
-      preconditions: current?.preconditions ?? "",
-      expected_result: current?.expected_result ?? "",
-      estimated_minutes: String(current?.estimated_minutes ?? ""),
-      steps: current?.steps_json ?? [{ index: 1, action: "", expected: "" }],
-      change_note: "",
-    });
+    setDraft(buildDraft());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [testCase?.id]);
 
@@ -238,21 +226,21 @@ function StepsTab({
     setSaving(true);
     const payload = {
       title: draft.title,
-      folder_path: draft.folder_path || "/",
+      folderPath: draft.folderPath || "/",
       priority: draft.priority,
       type: draft.type,
-      automation_status: draft.automation_status,
-      automation_key: draft.automation_key || null,
+      automationStatus: draft.automationStatus,
+      automationKey: draft.automationKey || null,
       tags: draft.tags
         ? draft.tags.split(",").map((t) => t.trim()).filter(Boolean)
         : [],
       preconditions: draft.preconditions,
-      expected_result: draft.expected_result,
-      estimated_minutes: draft.estimated_minutes
-        ? Number(draft.estimated_minutes)
+      expectedResult: draft.expectedResult,
+      estimatedMinutes: draft.estimatedMinutes
+        ? Number(draft.estimatedMinutes)
         : null,
       steps: draft.steps,
-      change_note: draft.change_note || undefined,
+      changeNote: draft.changeNote || undefined,
     };
     try {
       const saved = isNew
@@ -362,9 +350,9 @@ function StepsTab({
           <Field label="Folder path">
             <input
               className="input mono"
-              value={draft.folder_path}
+              value={draft.folderPath}
               disabled={!editable}
-              onChange={(e) => setDraft((d) => ({ ...d, folder_path: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, folderPath: e.target.value }))}
             />
           </Field>
           <Field label="Priority">
@@ -394,9 +382,9 @@ function StepsTab({
           <Field label="Automation status">
             <select
               className="select"
-              value={draft.automation_status}
+              value={draft.automationStatus}
               disabled={!editable}
-              onChange={(e) => setDraft((d) => ({ ...d, automation_status: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, automationStatus: e.target.value }))}
             >
               {["manual", "automated", "candidate"].map((a) => (
                 <option key={a} value={a}>{titleCase(a)}</option>
@@ -406,9 +394,9 @@ function StepsTab({
           <Field label="Automation key">
             <input
               className="input mono"
-              value={draft.automation_key}
+              value={draft.automationKey}
               disabled={!editable}
-              onChange={(e) => setDraft((d) => ({ ...d, automation_key: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, automationKey: e.target.value }))}
             />
           </Field>
           <Field label="Tags" help="Comma-separated.">
@@ -430,9 +418,9 @@ function StepsTab({
           <Field label="Expected result">
             <textarea
               className="textarea"
-              value={draft.expected_result}
+              value={draft.expectedResult}
               disabled={!editable}
-              onChange={(e) => setDraft((d) => ({ ...d, expected_result: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, expectedResult: e.target.value }))}
             />
           </Field>
           <Field label="Estimated minutes">
@@ -440,18 +428,18 @@ function StepsTab({
               className="input"
               type="number"
               min={0}
-              value={draft.estimated_minutes}
+              value={draft.estimatedMinutes}
               disabled={!editable}
-              onChange={(e) => setDraft((d) => ({ ...d, estimated_minutes: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, estimatedMinutes: e.target.value }))}
             />
           </Field>
           {!isNew ? (
             <Field label="Change note" help="Recorded on the new version.">
               <input
                 className="input"
-                value={draft.change_note}
+                value={draft.changeNote}
                 disabled={!editable}
-                onChange={(e) => setDraft((d) => ({ ...d, change_note: e.target.value }))}
+                onChange={(e) => setDraft((d) => ({ ...d, changeNote: e.target.value }))}
               />
             </Field>
           ) : null}
@@ -507,7 +495,7 @@ function VersionsTab({ testCase }: { testCase: TestCase | null }) {
         >
           <option value="">—</option>
           {versions.map((v) => (
-            <option key={v.version} value={v.version}>v{v.version} — {formatRelative(v.created_at)}</option>
+            <option key={v.version} value={v.version}>v{v.version} — {formatRelative(v.createdAt)}</option>
           ))}
         </select>
         <span className="text-muted">vs</span>
@@ -520,7 +508,7 @@ function VersionsTab({ testCase }: { testCase: TestCase | null }) {
         >
           <option value="">—</option>
           {versions.map((v) => (
-            <option key={v.version} value={v.version}>v{v.version} — {formatRelative(v.created_at)}</option>
+            <option key={v.version} value={v.version}>v{v.version} — {formatRelative(v.createdAt)}</option>
           ))}
         </select>
       </div>
@@ -537,8 +525,8 @@ function VersionSteps({ title, version }: { title: string; version: TestCaseVers
     <div className="panel">
       <div className="panel__header">
         <h3 className="panel__title">{title}</h3>
-        {version?.change_note ? (
-          <span className="text-muted text-xs ml-auto">{version.change_note}</span>
+        {version?.changeNote ? (
+          <span className="text-muted text-xs ml-auto">{version.changeNote}</span>
         ) : null}
       </div>
       <div className="panel__body">
@@ -546,7 +534,7 @@ function VersionSteps({ title, version }: { title: string; version: TestCaseVers
           <p className="text-muted">No version selected.</p>
         ) : (
           <ol className="space-y-2" style={{ paddingLeft: "var(--space-5)" }}>
-            {version.steps_json.map((s) => (
+            {version.steps.map((s) => (
               <li key={s.index}>
                 <div className="text-sm">{s.action}</div>
                 <div className="text-xs text-muted">Expected: {s.expected}</div>
@@ -583,13 +571,12 @@ function RequirementsTab({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const toggle = async (req: Requirement) => {
+    if (linked.has(req.id)) return;
     setBusyId(req.id);
     try {
-      if (linked.has(req.id)) {
-        await api.del(`/cases/${testCase?.id}/requirements/${req.id}`);
-      } else {
-        await api.post(`/cases/${testCase?.id}/requirements`, { requirement_id: req.id });
-      }
+      await api.post(`/cases/${testCase?.id}/requirements`, {
+        requirementIds: [req.id],
+      });
       reload();
     } catch (err) {
       toastError("Failed to update requirement link", (err as Error).message);
@@ -624,7 +611,7 @@ function RequirementsTab({
                 <input
                   type="checkbox"
                   className="checkbox"
-                  disabled={!can("author_cases") || busyId === r.id}
+                  disabled={!can("author_cases") || busyId === r.id || linked.has(r.id)}
                   checked={linked.has(r.id)}
                   onChange={() => toggle(r)}
                   aria-label={`Link ${r.ref}`}
@@ -656,14 +643,20 @@ function HistoryTab({ caseId }: { caseId: string }) {
         <div className="panel__header">
           <h2 className="panel__title">Flake trend</h2>
           <span className="ml-auto text-sm text-muted">
-            score {data.flake_score.toFixed(3)} · {titleCase(data.verdict)}
+            {data.flake
+              ? `score ${data.flake.score.toFixed(3)} · ${titleCase(data.flake.verdict)} · ${data.flake.transitions} transitions`
+              : "no flake data"}
           </span>
         </div>
         <div className="panel__body">
-          {data.flake.length === 0 ? (
+          {!data.flake ? (
             <EmptyState title="No flake data" />
           ) : (
-            <Sparkline values={data.flake.map((f) => f.pass_rate * 100)} width={640} height={80} />
+            <div className="flex gap-4 text-sm text-muted">
+              <span>Total runs: {data.flake.totalRuns}</span>
+              <span>Transitions: {data.flake.transitions}</span>
+              <span className="text-secondary">{titleCase(data.flake.verdict)}</span>
+            </div>
           )}
         </div>
       </div>
@@ -672,7 +665,7 @@ function HistoryTab({ caseId }: { caseId: string }) {
           <h2 className="panel__title">Execution timeline</h2>
         </div>
         <div className="panel__body">
-          {data.executions.length === 0 ? (
+          {data.timeline.length === 0 ? (
             <EmptyState title="No executions" />
           ) : (
             <table className="table">
@@ -687,14 +680,14 @@ function HistoryTab({ caseId }: { caseId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {data.executions.map((ex) => (
-                  <tr key={ex.id}>
-                    <td className="mono">{ex.run_name ?? ex.run_id.slice(0, 8)}</td>
-                    <td className="mono">{ex.build_label ?? "—"}</td>
+                {data.timeline.map((ex) => (
+                  <tr key={ex.executionId}>
+                    <td className="mono">{ex.runName ?? ex.runId.slice(0, 8)}</td>
+                    <td className="mono">{ex.build ?? "—"}</td>
                     <td><ExecutionBadge status={ex.status} /></td>
                     <td>{ex.attempt}</td>
-                    <td>{formatDuration(ex.duration_ms)}</td>
-                    <td className="text-muted">{formatRelative(ex.executed_at)}</td>
+                    <td>{formatDuration(ex.durationMs)}</td>
+                    <td className="text-muted">{formatRelative(ex.executedAt)}</td>
                   </tr>
                 ))}
               </tbody>

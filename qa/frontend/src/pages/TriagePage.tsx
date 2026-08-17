@@ -37,28 +37,28 @@ export function TriagePage() {
     const failed = (executions ?? []).filter((e) => e.status === "failed");
     const map = new Map<string, FailureCluster>();
     for (const ex of failed) {
-      const sig = ex.failure_signature ?? "unknown";
+      const sig = ex.failureSignature ?? "unknown";
       let c = map.get(sig);
       if (!c) {
         c = {
           signature: sig,
           count: 0,
-          first_seen_at: ex.executed_at ?? "",
-          last_seen_at: ex.executed_at ?? "",
-          sample_error:
-            ex.step_results_json?.find((s) => s.status === "failed")?.comment ??
+          firstSeenAt: ex.executedAt ?? "",
+          lastSeenAt: ex.executedAt ?? "",
+          sampleError:
+            ex.stepResults?.find((s) => s.status === "failed")?.comment ??
             ex.comment ??
             "No message captured",
-          execution_ids: [],
-          test_case_refs: [],
+          executionIds: [],
+          caseRefs: [],
         };
         map.set(sig, c);
       }
       c.count += 1;
-      c.execution_ids.push(ex.id);
-      if (ex.test_case?.ref) c.test_case_refs.push(ex.test_case.ref);
-      if (ex.executed_at && ex.executed_at < c.first_seen_at) c.first_seen_at = ex.executed_at;
-      if (ex.executed_at && ex.executed_at > c.last_seen_at) c.last_seen_at = ex.executed_at;
+      c.executionIds.push(ex.id);
+      if (ex.caseRef) c.caseRefs.push(ex.caseRef);
+      if (ex.executedAt && ex.executedAt < c.firstSeenAt) c.firstSeenAt = ex.executedAt;
+      if (ex.executedAt && ex.executedAt > c.lastSeenAt) c.lastSeenAt = ex.executedAt;
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [executions]);
@@ -66,9 +66,10 @@ export function TriagePage() {
   const createDefect = async (cluster: FailureCluster) => {
     try {
       const defect = await api.post<{ ref: string }>(`/defects`, {
-        fromExecutionIds: cluster.execution_ids,
+        projectId,
+        fromExecutionIds: cluster.executionIds,
       });
-      success("Defect created", `${defect.ref} linked ${cluster.execution_ids.length} execution(s)`);
+      success("Defect created", `${defect.ref} linked ${cluster.executionIds.length} execution(s)`);
       reload();
     } catch (err) {
       toastError("Failed to create defect", (err as Error).message);
@@ -90,7 +91,7 @@ export function TriagePage() {
             <option value="">Select a run…</option>
             {runs?.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.name} — {r.build?.version_label ?? "no build"}
+                {r.name} — {r.buildLabel ?? "no build"}
               </option>
             ))}
           </select>
@@ -127,9 +128,9 @@ export function TriagePage() {
                 </div>
                 <div className="panel__body">
                   <div className="flex gap-4 text-xs text-muted mb-2">
-                    <span>First seen: {formatRelative(c.first_seen_at)}</span>
-                    <span>Last seen: {formatRelative(c.last_seen_at)}</span>
-                    <span>{c.test_case_refs.length} distinct case(s)</span>
+                    <span>First seen: {formatRelative(c.firstSeenAt)}</span>
+                    <span>Last seen: {formatRelative(c.lastSeenAt)}</span>
+                    <span>{c.caseRefs.length} distinct case(s)</span>
                   </div>
                   <pre
                     className="mono text-xs"
@@ -141,7 +142,7 @@ export function TriagePage() {
                       color: "var(--color-dangerText)",
                     }}
                   >
-                    {c.sample_error}
+                    {c.sampleError}
                   </pre>
                 </div>
               </div>

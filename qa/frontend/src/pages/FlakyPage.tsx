@@ -5,7 +5,6 @@ import { useCurrentProjectId } from "@/lib/project";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/Toast";
 import type { FlakySignal } from "@/lib/types";
-import { OutcomeDots } from "@/components/charts";
 import {
   Button,
   EmptyState,
@@ -28,14 +27,14 @@ export function FlakyPage() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const sorted = [...(data ?? [])].sort((a, b) => b.flake_score - a.flake_score);
+  const sorted = [...(data ?? [])].sort((a, b) => b.flakeScore - a.flakeScore);
 
   const submitQuarantine = async () => {
     if (!quarantine) return;
     setBusy(true);
     try {
-      await api.post(`/cases/${quarantine.test_case_id}/quarantine`, { reason });
-      success("Case quarantined", quarantine.test_case?.ref);
+      await api.post(`/cases/${quarantine.testCaseId}/quarantine`, { reason });
+      success("Case quarantined", quarantine.ref);
       setQuarantine(null);
       setReason("");
       reload();
@@ -48,8 +47,8 @@ export function FlakyPage() {
 
   const release = async (signal: FlakySignal) => {
     try {
-      await api.del(`/cases/${signal.test_case_id}/quarantine`);
-      success("Quarantine released", signal.test_case?.ref);
+      await api.del(`/cases/${signal.testCaseId}/quarantine`);
+      success("Quarantine released", signal.ref);
       reload();
     } catch (err) {
       toastError("Release failed", (err as Error).message);
@@ -72,31 +71,24 @@ export function FlakyPage() {
                 <tr>
                   <th>Case</th>
                   <th>Title</th>
+                  <th>Folder</th>
                   <th>Verdict</th>
                   <th>Flake score</th>
                   <th>Runs</th>
                   <th>Transitions</th>
-                  <th>Outcome timeline</th>
                   <th>Quarantine</th>
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((s) => (
-                  <tr key={s.id}>
-                    <td className="mono">{s.test_case?.ref ?? s.test_case_id.slice(0, 8)}</td>
-                    <td className="truncate" style={{ maxWidth: 260 }}>{s.test_case?.title ?? "—"}</td>
+                  <tr key={s.testCaseId}>
+                    <td className="mono">{s.ref}</td>
+                    <td className="truncate" style={{ maxWidth: 260 }}>{s.title}</td>
+                    <td className="mono text-muted">{s.folderPath}</td>
                     <td><FlakyBadge verdict={s.verdict} /></td>
-                    <td className="mono">{s.flake_score.toFixed(3)}</td>
-                    <td>{s.total_runs}</td>
+                    <td className="mono">{s.flakeScore.toFixed(3)}</td>
+                    <td>{s.totalRuns}</td>
                     <td>{s.transitions}</td>
-                    <td>
-                      <OutcomeDots
-                        outcomes={(s.timeline ?? []).map((t) => ({
-                          status: t.status,
-                          label: t.build_label,
-                        }))}
-                      />
-                    </td>
                     <td>
                       {s.quarantined ? (
                         <Button size="xs" variant="secondary" onClick={() => release(s)}>
@@ -121,7 +113,7 @@ export function FlakyPage() {
       <Modal
         open={!!quarantine}
         onClose={() => setQuarantine(null)}
-        title={`Quarantine ${quarantine?.test_case?.ref ?? ""}`}
+        title={`Quarantine ${quarantine?.ref ?? ""}`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setQuarantine(null)}>

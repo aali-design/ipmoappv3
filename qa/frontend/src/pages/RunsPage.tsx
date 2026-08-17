@@ -76,7 +76,7 @@ export function RunsPage() {
               </thead>
               <tbody>
                 {data.map((run) => {
-                  const stats = run.stats_json;
+                  const stats = run.stats;
                   const executed = stats
                     ? stats.total - stats.untested
                     : 0;
@@ -90,8 +90,8 @@ export function RunsPage() {
                         </Badge>
                       </td>
                       <td>{titleCase(run.source)}</td>
-                      <td className="mono">{run.build?.version_label ?? "—"}</td>
-                      <td>{run.environment?.name ?? "—"}</td>
+                      <td className="mono">{run.buildLabel ?? "—"}</td>
+                      <td>{run.environmentName ?? "—"}</td>
                       <td style={{ minWidth: 160 }}>
                         {stats ? (
                           <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function RunsPage() {
                           <span className="text-muted">—</span>
                         )}
                       </td>
-                      <td className="text-muted">{formatRelative(run.started_at ?? run.created_at)}</td>
+                      <td className="text-muted">{formatRelative(run.startedAt ?? run.createdAt)}</td>
                     </tr>
                   );
                 })}

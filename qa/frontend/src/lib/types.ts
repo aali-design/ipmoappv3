@@ -1,5 +1,6 @@
-// Domain types mirroring the §7 API contract and §2 domain model.
-// Field names match the backend's JSON exactly.
+// Domain types mirroring the backend's actual JSON output.
+// The backend serializes camelCase everywhere; these field names match the
+// live API (see qa/backend/src/services/*.ts).
 
 export type Role =
   | "owner"
@@ -61,27 +62,24 @@ export type FlakyVerdict = "stable" | "suspect" | "flaky";
 export interface User {
   id: string;
   email: string;
-  full_name: string;
+  fullName: string;
   role: Role;
-  is_active: boolean;
-  last_login_at?: string | null;
+  organizationId: string;
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+  createdAt?: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user: User;
-}
-
-export interface Project {
-  id: string;
-  key: string;
-  name: string;
-  description?: string | null;
-  default_environment_id?: string | null;
-  archived_at?: string | null;
-  created_at: string;
-  settings_json?: ProjectSettings | null;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: Role;
+    organizationId: string;
+  };
 }
 
 export interface ProjectSettings {
@@ -94,23 +92,40 @@ export interface ProjectSettings {
   };
 }
 
+export interface Project {
+  id: string;
+  key: string;
+  name: string;
+  description?: string | null;
+  defaultEnvironmentId?: string | null;
+  settings?: ProjectSettings | null;
+  memberCount?: number;
+  createdAt: string;
+}
+
 export interface ProjectMember {
-  user_id: string;
-  project_role: Role;
-  full_name?: string;
-  email?: string;
-  role?: Role;
+  userId: string;
+  email: string;
+  fullName: string;
+  projectRole: Role;
+  globalRole: Role;
 }
 
 export interface Requirement {
   id: string;
-  project_id: string;
   ref: string;
   title: string;
   description?: string | null;
   criticality: RequirementCriticality;
   status: RequirementStatus;
-  created_at: string;
+  createdAt: string;
+}
+
+export interface RequirementRef {
+  id: string;
+  ref: string;
+  title: string;
+  criticality: RequirementCriticality;
 }
 
 export interface CaseStep {
@@ -121,37 +136,39 @@ export interface CaseStep {
 
 export interface TestCase {
   id: string;
-  project_id: string;
   ref: string;
   title: string;
-  current_version: number;
-  folder_path: string;
+  currentVersion: number;
+  folderPath: string;
   priority: CasePriority;
   type: CaseType;
-  automation_status: AutomationStatus;
-  automation_key?: string | null;
-  owner_id?: string | null;
-  is_archived: boolean;
-  created_at: string;
-  updated_at: string;
-  version?: TestCaseVersion | null;
+  automationStatus: AutomationStatus;
+  automationKey?: string | null;
+  ownerId?: string | null;
+  isArchived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  // detail-only fields (GET /cases/:id)
+  steps?: CaseStep[];
+  preconditions?: string | null;
+  expectedResult?: string | null;
+  tags?: string[];
+  estimatedMinutes?: number | null;
+  requirements?: RequirementRef[];
   versions?: TestCaseVersion[];
-  requirements?: Requirement[];
 }
 
 export interface TestCaseVersion {
-  id: string;
-  test_case_id: string;
   version: number;
   title: string;
   preconditions?: string | null;
-  steps_json: CaseStep[];
-  expected_result?: string | null;
+  steps: CaseStep[];
+  expectedResult?: string | null;
   tags: string[];
-  estimated_minutes?: number | null;
-  authored_by?: string | null;
-  change_note?: string | null;
-  created_at: string;
+  estimatedMinutes?: number | null;
+  authoredBy?: string | null;
+  changeNote?: string | null;
+  createdAt: string;
 }
 
 export interface Paginated<T> {
@@ -163,12 +180,11 @@ export interface Paginated<T> {
 
 export interface Suite {
   id: string;
-  project_id: string;
   name: string;
   description?: string | null;
-  filter_json?: SuiteFilter | null;
-  case_count?: number;
-  created_at?: string;
+  filter?: SuiteFilter | null;
+  caseCount?: number;
+  createdAt?: string;
 }
 
 export interface SuiteFilter {
@@ -182,41 +198,42 @@ export interface SuiteFilter {
 
 export interface Environment {
   id: string;
-  project_id: string;
   name: string;
-  base_url?: string | null;
+  baseUrl?: string | null;
   notes?: string | null;
+  createdAt: string;
 }
 
 export interface Build {
   id: string;
-  project_id: string;
-  version_label: string;
-  commit_sha?: string | null;
+  projectId: string;
+  versionLabel: string;
+  commitSha?: string | null;
   branch?: string | null;
-  ci_url?: string | null;
-  created_at: string;
+  ciUrl?: string | null;
+  createdAt: string;
 }
 
 export interface GatePolicy {
   minPassRate?: number;
   maxOpenBlockers?: number;
   maxOpenCritical?: number;
+  maxOpenDefects?: number;
   minRequirementCoverage?: number;
   maxFlakyInSuite?: number;
   requiredSuites?: string[];
   maxOpenDefectsBySeverity?: Record<string, number>;
 }
 
+export type GateValue = number | string | string[] | Record<string, number>;
+
 export interface GateCriterion {
   key: string;
-  required: number;
-  actual: number;
+  required: GateValue;
+  actual: GateValue;
   passed: boolean;
   waived?: boolean;
-  evidence: {
-    [k: string]: unknown;
-  };
+  evidence: Record<string, unknown>;
 }
 
 export interface GateResult {
@@ -226,37 +243,35 @@ export interface GateResult {
   criteria: GateCriterion[];
   blocking: string[];
   policyHash?: string;
-  override?: {
-    by: string;
-    byName?: string;
-    reason: string;
-    at: string;
-  } | null;
+  waivedBy?: { id: string; name: string };
+  waiverReason?: string;
+  waivedAt?: string;
 }
 
 export interface Release {
   id: string;
-  project_id: string;
+  projectId: string;
   name: string;
-  target_build_id?: string | null;
-  planned_date?: string | null;
+  targetBuildId?: string | null;
+  buildLabel?: string | null;
+  plannedDate?: string | null;
   status: ReleaseStatus;
-  gate_policy_json?: GatePolicy | null;
-  gate_result_json?: GateResult | null;
-  gate_decided_by?: string | null;
-  gate_decided_at?: string | null;
-  created_at: string;
+  gatePolicy?: GatePolicy | null;
+  gateResult?: GateResult | null;
+  gateDecidedBy?: string | null;
+  gateDecidedAt?: string | null;
+  createdAt: string;
 }
 
 export interface TestPlan {
   id: string;
-  project_id: string;
-  release_id?: string | null;
   name: string;
   description?: string | null;
   status: "draft" | "active" | "closed";
-  created_by?: string | null;
-  created_at: string;
+  releaseId?: string | null;
+  createdBy?: string | null;
+  runCount?: number;
+  createdAt: string;
 }
 
 export interface RunStats {
@@ -271,21 +286,21 @@ export interface RunStats {
 
 export interface TestRun {
   id: string;
-  project_id: string;
-  plan_id?: string | null;
-  suite_id?: string | null;
-  build_id?: string | null;
-  environment_id: string;
+  projectId: string;
+  planId?: string | null;
+  suiteId?: string | null;
+  buildId?: string | null;
+  buildLabel?: string | null;
+  environmentId: string;
+  environmentName: string;
   name: string;
   source: "manual" | "ci";
   status: RunStatus;
-  started_at?: string | null;
-  completed_at?: string | null;
-  created_by?: string | null;
-  stats_json?: RunStats | null;
-  created_at: string;
-  build?: Build | null;
-  environment?: Environment | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdBy?: string | null;
+  stats?: RunStats | null;
+  createdAt: string;
 }
 
 export interface StepResult {
@@ -298,36 +313,36 @@ export interface StepResult {
 
 export interface TestExecution {
   id: string;
-  run_id: string;
-  test_case_id: string;
-  case_version_id: string;
-  assigned_to?: string | null;
+  runId: string;
+  testCaseId: string;
+  caseVersionId: string;
+  caseRef: string;
+  caseTitle: string;
+  assignedTo?: string | null;
   status: ExecutionStatus;
-  duration_ms?: number | null;
-  executed_by?: string | null;
-  executed_at?: string | null;
+  durationMs?: number | null;
+  executedBy?: string | null;
+  executedAt?: string | null;
   comment?: string | null;
-  step_results_json?: StepResult[] | null;
-  automation_ref?: string | null;
-  failure_signature?: string | null;
+  stepResults?: StepResult[] | null;
+  automationRef?: string | null;
+  failureSignature?: string | null;
   attempt: number;
-  test_case?: TestCase | null;
 }
 
 export interface Attachment {
   id: string;
-  entity_type: string;
-  entity_id: string;
+  entityType: string;
+  entityId: string;
   filename: string;
-  content_type: string;
-  size_bytes: number;
-  uploaded_by?: string | null;
-  created_at: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedBy?: string | null;
+  createdAt: string;
 }
 
 export interface Defect {
   id: string;
-  project_id: string;
   ref: string;
   title: string;
   description?: string | null;
@@ -335,171 +350,202 @@ export interface Defect {
   priority: DefectPriority;
   status: DefectStatus;
   resolution?: string | null;
-  reported_by?: string | null;
-  assigned_to?: string | null;
-  found_in_build_id?: string | null;
-  fixed_in_build_id?: string | null;
-  duplicate_of_id?: string | null;
-  environment_id?: string | null;
-  sla_due_at?: string | null;
-  first_seen_at?: string | null;
-  resolved_at?: string | null;
-  closed_at?: string | null;
-  escaped_to_prod: boolean;
-  created_at: string;
-  updated_at: string;
+  reportedBy?: string | null;
+  reporterEmail?: string | null;
+  assignedTo?: string | null;
+  assigneeEmail?: string | null;
+  foundInBuildId?: string | null;
+  fixedInBuildId?: string | null;
+  duplicateOfId?: string | null;
+  environmentId?: string | null;
+  slaDueAt?: string | null;
+  firstSeenAt?: string | null;
+  resolvedAt?: string | null;
+  closedAt?: string | null;
+  escapedToProd: boolean;
+  createdAt: string;
+  updatedAt: string;
   events?: DefectEvent[];
-  executions?: TestExecution[];
-  attachments?: Attachment[];
-  reporter_name?: string | null;
-  assignee_name?: string | null;
-  found_in_build?: string | null;
+  linkedExecutions?: LinkedExecution[];
 }
 
 export interface DefectEvent {
   id: string;
-  defect_id: string;
-  actor_id?: string | null;
-  from_status?: string | null;
-  to_status: string;
-  field_changes_json?: Record<string, unknown> | null;
+  actorId?: string | null;
+  actorEmail?: string | null;
+  fromStatus?: string | null;
+  toStatus: string;
+  fieldChanges?: Record<string, unknown> | null;
   comment?: string | null;
-  created_at: string;
-  actor_name?: string | null;
+  createdAt: string;
+}
+
+export interface LinkedExecution {
+  executionId: string;
+  testCaseId: string;
+  caseRef: string;
+  status: ExecutionStatus;
+  executedAt?: string | null;
 }
 
 export interface FlakySignal {
-  id: string;
-  test_case_id: string;
-  window_start: string;
-  window_end: string;
-  total_runs: number;
-  transitions: number;
-  flake_score: number;
+  testCaseId: string;
+  ref: string;
+  title: string;
+  folderPath: string;
+  flakeScore: number;
   verdict: FlakyVerdict;
-  computed_at: string;
-  test_case?: TestCase | null;
-  timeline?: FlakyTimelinePoint[];
-  quarantined?: boolean;
+  totalRuns: number;
+  transitions: number;
+  computedAt: string;
+  quarantined: boolean;
+  quarantineReason?: string | null;
 }
 
-export interface FlakyTimelinePoint {
-  build_label: string;
-  commit_sha?: string | null;
-  status: ExecutionStatus;
-  executed_at?: string | null;
-}
-
-export interface Quarantine {
+export interface TraceabilityRequirement {
   id: string;
-  test_case_id: string;
-  reason?: string | null;
-  quarantined_by?: string | null;
-  quarantined_at?: string | null;
-  released_at?: string | null;
-  linked_defect_id?: string | null;
+  ref: string;
+  title: string;
+  criticality: RequirementCriticality;
+}
+
+export interface TraceabilityCase {
+  testCaseId: string;
+  caseRef: string;
+  caseTitle: string;
+  status: ExecutionStatus;
+}
+
+export type RequirementStatus_Matrix =
+  | "covered_passing"
+  | "covered_failing"
+  | "covered_untested"
+  | "uncovered";
+
+export interface TraceabilityRow {
+  requirement: TraceabilityRequirement;
+  status: RequirementStatus_Matrix;
+  cases: TraceabilityCase[];
+}
+
+export interface TraceabilityMatrix {
+  matrix: TraceabilityRow[];
+  gaps: Array<{ id: string; ref: string; title: string; criticality: RequirementCriticality }>;
+  coverage: number;
+  totalRequirements: number;
+  passingRequirements: number;
+  buildId: string | null;
+}
+
+export interface PassRatePoint {
+  build: string;
+  buildId: string;
+  passRate: number | null;
+  passed: number;
+  executed: number;
+}
+
+export interface Metrics {
+  passRateTrend: PassRatePoint[];
+  defectDensity: number;
+  totalDefects: number;
+  meanTimeToResolveSeconds: number | null;
+  meanTimeToDetectSeconds: number | null;
+  reopenRate: number;
+  escapeRate: number;
+  openDefectsBySeverity: Record<string, number>;
+  activePlanBurnDown: Array<{
+    runId: string;
+    name: string;
+    status: string;
+    remaining: number;
+    createdAt: string;
+  }>;
+  topFlakyCases: Array<{
+    caseId: string;
+    ref: string;
+    title: string;
+    flakeScore: number;
+    verdict: FlakyVerdict;
+  }>;
+}
+
+export interface SuggestedOrderItem {
+  testCaseId: string;
+  ref: string;
+  title: string;
+  folderPath: string;
+  priority: CasePriority;
+  riskScore: number;
+  factors: Record<string, number>;
+}
+
+export interface SuggestedOrder {
+  items: SuggestedOrderItem[];
+  weights: Record<string, number>;
 }
 
 export interface FailureCluster {
   signature: string;
   count: number;
-  first_seen_at: string;
-  last_seen_at: string;
-  sample_error: string;
-  execution_ids: string[];
-  test_case_refs: string[];
-}
-
-export interface TraceabilityCell {
-  requirement_id: string;
-  status: "covered_passing" | "covered_failing" | "covered_untested" | "uncovered";
-  case_refs: string[];
-}
-
-export interface TraceabilityMatrix {
-  build_id: string;
-  requirements: Requirement[];
-  cases: Array<{ id: string; ref: string; title: string }>;
-  cells: Record<string, TraceabilityCell>;
-  gaps: Array<{ requirement: Requirement; caseCount: number }>;
-  coveragePct: number;
-}
-
-export interface Metrics {
-  passRateTrend: Array<{ build_label: string; pass_rate: number; executed: number }>;
-  defectDensity: number;
-  meanTimeToDetectHours: number;
-  meanTimeToResolveHours: number;
-  reopenRate: number;
-  escapeRate: number;
-  openDefectsBySeverity: Record<string, number>;
-  burnDown: Array<{ day: string; remaining: number }>;
-  flakiestCases: Array<{ test_case_ref: string; title: string; flake_score: number }>;
-  recentActivity: Array<{
-    id: string;
-    kind: string;
-    summary: string;
-    actor?: string | null;
-    created_at: string;
-  }>;
-  coveragePct: number;
-  coverageGaps: Array<{ ref: string; title: string; criticality: string }>;
-}
-
-export interface SuggestedOrderItem {
-  test_case_id: string;
-  ref: string;
-  title: string;
-  risk_score: number;
-  factors: Record<string, number>;
-}
-
-export interface IngestionBatch {
-  id: string;
-  project_id: string;
-  build_id?: string | null;
-  run_id?: string | null;
-  format: "junit" | "xunit" | "trx" | "allure_json";
-  raw_size_bytes: number;
-  parsed_count: number;
-  matched_count: number;
-  unmatched_count: number;
-  unmatched_json?: unknown;
-  status: string;
-  error_message?: string | null;
-  created_at: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  sampleError: string;
+  executionIds: string[];
+  caseRefs: string[];
 }
 
 export interface Webhook {
   id: string;
   url: string;
   events: string[];
-  is_active: boolean;
-  secret?: string | null;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface AuditLogEntry {
   id: string;
-  actor_id?: string | null;
+  actorId?: string | null;
   action: string;
-  entity_type?: string | null;
-  entity_id?: string | null;
-  metadata_json?: Record<string, unknown> | null;
+  entityType?: string | null;
+  entityId?: string | null;
+  metadata?: Record<string, unknown> | null;
   ip?: string | null;
-  created_at: string;
-  actor_name?: string | null;
+  createdAt: string;
 }
 
 export interface ApiKey {
   id: string;
   name: string;
-  key_prefix: string;
+  keyPrefix: string;
   scopes: string[];
-  expires_at?: string | null;
-  revoked_at?: string | null;
-  created_by?: string | null;
-  created_at: string;
-  plaintext?: string;
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+  projectId?: string | null;
+  createdAt: string;
+  key?: string;
+}
+
+export interface CaseHistory {
+  caseId: string;
+  timeline: Array<{
+    executionId: string;
+    runId: string;
+    runName: string;
+    build: string | null;
+    commitSha: string | null;
+    status: ExecutionStatus;
+    executedAt: string | null;
+    durationMs: number | null;
+    comment: string | null;
+    attempt: number;
+  }>;
+  flake: {
+    score: number;
+    verdict: FlakyVerdict;
+    totalRuns: number;
+    transitions: number;
+  } | null;
 }
 
 export interface ApiError {
@@ -507,25 +553,4 @@ export interface ApiError {
   message: string;
   details?: unknown;
   status: number;
-}
-
-export interface CaseHistory {
-  executions: Array<{
-    id: string;
-    run_id: string;
-    run_name?: string;
-    build_label?: string | null;
-    status: ExecutionStatus;
-    executed_at?: string | null;
-    duration_ms?: number | null;
-    executed_by?: string | null;
-    attempt: number;
-  }>;
-  flake: Array<{
-    build_label: string;
-    pass_rate: number;
-    count: number;
-  }>;
-  flake_score: number;
-  verdict: FlakyVerdict;
 }

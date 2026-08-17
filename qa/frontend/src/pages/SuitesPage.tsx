@@ -128,15 +128,15 @@ function SuitesList({
             <p className="text-muted text-sm mb-3">{s.description ?? "No description"}</p>
             <div className="flex items-center gap-2">
               <span className="badge badge--info">
-                {s.case_count ?? 0} cases
+                {s.caseCount ?? 0} cases
               </span>
               <span className="badge badge--neutral">
-                {s.filter_json ? "Saved filter" : "Static membership"}
+                {s.filter ? "Saved filter" : "Static membership"}
               </span>
             </div>
-            {s.filter_json ? (
+            {s.filter ? (
               <pre className="mono text-xs text-muted mt-3" style={{ whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(s.filter_json, null, 2)}
+                {JSON.stringify(s.filter, null, 2)}
               </pre>
             ) : null}
           </div>
@@ -287,7 +287,7 @@ function CreateSuiteModal({
       await api.post(`/projects/${projectId}/suites`, {
         name,
         description,
-        filter_json: mode === "filter" ? filter : null,
+        filter: mode === "filter" ? filter : null,
       });
       onSaved();
       setName("");

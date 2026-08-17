@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import type {
   ExecutionStatus,
   StepResult,
+  TestCase,
   TestExecution,
   TestRun,
 } from "@/lib/types";
@@ -80,7 +81,7 @@ export function RunExecutionPage() {
   }
   if (!run) return null;
 
-  const stats = run.stats_json;
+  const stats = run.stats;
   const total = stats?.total ?? executions?.length ?? 0;
   const executed = stats ? stats.total - stats.untested : 0;
 
@@ -157,8 +158,8 @@ export function RunExecutionPage() {
                     style={{ width: "100%", justifyContent: "flex-start" }}
                     onClick={() => setCurrentId(ex.id)}
                   >
-                    <span className="mono text-muted">{ex.test_case?.ref ?? ex.test_case_id.slice(0, 8)}</span>
-                    <span className="truncate flex-1">{ex.test_case?.title ?? "—"}</span>
+                    <span className="mono text-muted">{ex.caseRef ?? ex.testCaseId.slice(0, 8)}</span>
+                    <span className="truncate flex-1">{ex.caseTitle ?? "—"}</span>
                     <ExecutionBadge status={ex.status} />
                   </button>
                 ))}
@@ -170,6 +171,7 @@ export function RunExecutionPage() {
                 <ExecutionDetail
                   key={current.id}
                   execution={current}
+                  projectId={run.projectId}
                   canExecute={can("execute_tests")}
                   onChanged={() => {
                     reloadExecs();
@@ -198,6 +200,7 @@ export function RunExecutionPage() {
 
 function ExecutionDetail({
   execution,
+  projectId,
   canExecute,
   onChanged,
   onNext,
@@ -205,6 +208,7 @@ function ExecutionDetail({
   onError,
 }: {
   execution: TestExecution;
+  projectId: string;
   canExecute: boolean;
   onChanged: () => void;
   onNext: () => void;
@@ -212,22 +216,36 @@ function ExecutionDetail({
   onError: (m: string) => void;
 }) {
   const { success } = useToast();
-  const [steps, setSteps] = useState<StepResult[]>(() =>
-    (execution.step_results_json ?? []).length > 0
-      ? (execution.step_results_json as StepResult[])
-      : (execution.test_case?.version?.steps_json ?? []).map((s) => ({
-          index: s.index,
-          action: s.action,
-          expected: s.expected,
-          status: "untested" as ExecutionStatus,
-        })),
+  const { data: testCase } = useApi<TestCase>(
+    () => api.get(`/cases/${execution.testCaseId}`),
+    [execution.testCaseId],
   );
+  const [steps, setSteps] = useState<StepResult[]>([]);
+  const [seeded, setSeeded] = useState(false);
   const [comment, setComment] = useState(execution.comment ?? "");
   const [elapsed, setElapsed] = useState(0);
   const [saving, setSaving] = useState(false);
   const [creatingDefect, setCreatingDefect] = useState(false);
   const [dragging, setDragging] = useState(false);
   const startedRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (seeded) return;
+    if (execution.stepResults && execution.stepResults.length > 0) {
+      setSteps(execution.stepResults);
+      setSeeded(true);
+    } else if (testCase?.steps && testCase.steps.length > 0) {
+      setSteps(
+        testCase.steps.map((s) => ({
+          index: s.index,
+          action: s.action,
+          expected: s.expected,
+          status: "untested" as ExecutionStatus,
+        })),
+      );
+      setSeeded(true);
+    }
+  }, [execution.stepResults, testCase, seeded]);
 
   useEffect(() => {
     startedRef.current = Date.now();
@@ -244,8 +262,8 @@ function ExecutionDetail({
       await api.patch(`/executions/${execution.id}`, {
         status,
         comment,
-        step_results: steps,
-        duration_ms: elapsed,
+        stepResults: steps,
+        durationMs: elapsed,
       });
       success(`Marked ${titleCase(status)}`);
       onChanged();
@@ -260,6 +278,7 @@ function ExecutionDetail({
     setCreatingDefect(true);
     try {
       const defect = await api.post<{ id: string }>(`/defects`, {
+        projectId,
         fromExecutionIds: [execution.id],
       });
       success("Defect created from failure");
@@ -292,8 +311,8 @@ function ExecutionDetail({
   const upload = async (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    form.append("entity_type", "execution");
-    form.append("entity_id", execution.id);
+    form.append("entityType", "execution");
+    form.append("entityId", execution.id);
     try {
       await api.post(`/attachments`, form);
       success("Attachment uploaded", file.name);
@@ -310,7 +329,7 @@ function ExecutionDetail({
       <div className="panel">
         <div className="panel__header">
           <h2 className="panel__title">
-            {execution.test_case?.ref ?? ""} — {execution.test_case?.title ?? "Untitled"}
+            {execution.caseRef} — {execution.caseTitle || "Untitled"}
           </h2>
           <span className="ml-auto text-sm mono">{formatElapsed(elapsed)}</span>
         </div>
@@ -318,14 +337,14 @@ function ExecutionDetail({
           <div className="flex items-center gap-2 mb-3">
             <ExecutionBadge status={execution.status} />
             <span className="text-xs text-muted">
-              attempt {execution.attempt} · v{execution.test_case?.version?.version}
+              attempt {execution.attempt}
             </span>
           </div>
-          {execution.test_case?.version?.preconditions ? (
+          {testCase?.preconditions ? (
             <div className="panel" style={{ background: "var(--color-bgElevated)", marginBottom: "var(--space-3)" }}>
               <div className="panel__body">
                 <span className="text-xs text-muted font-semibold">Preconditions</span>
-                <p className="text-sm mt-1">{execution.test_case.version.preconditions}</p>
+                <p className="text-sm mt-1">{testCase.preconditions}</p>
               </div>
             </div>
           ) : null}
@@ -358,6 +377,9 @@ function ExecutionDetail({
                 )}
               </div>
             ))}
+            {steps.length === 0 ? (
+              <p className="text-muted text-sm">No steps recorded for this case.</p>
+            ) : null}
           </div>
 
           <div className="mt-3">

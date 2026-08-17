@@ -73,8 +73,8 @@ export function CasesPage() {
   const folders = useMemo(() => {
     const set = new Set<string>();
     data?.items.forEach((c) => {
-      if (c.folder_path) {
-        const parts = c.folder_path.split("/").filter(Boolean);
+      if (c.folderPath) {
+        const parts = c.folderPath.split("/").filter(Boolean);
         for (let i = 1; i <= parts.length; i++) {
           set.add("/" + parts.slice(0, i).join("/"));
         }
@@ -107,10 +107,16 @@ export function CasesPage() {
   const runBulk = async () => {
     setBusy(true);
     try {
+      const tags = bulkTags
+        ? bulkTags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+      const action = bulkFolder.trim() ? "move" : tags.length ? "tag" : null;
       await api.post(`/cases/bulk`, {
+        projectId,
         caseIds: Array.from(selected),
-        folder: bulkFolder || undefined,
-        tags: bulkTags ? bulkTags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+        action,
+        folderPath: bulkFolder.trim() || undefined,
+        tags: tags.length ? tags : undefined,
       });
       success("Bulk update applied", `${selected.size} case(s) updated`);
       setBulkOpen(false);
@@ -308,15 +314,15 @@ export function CasesPage() {
                           <td className="truncate" style={{ maxWidth: 320 }}>
                             {c.title}
                           </td>
-                          <td className="mono text-muted">{c.folder_path || "/"}</td>
+                          <td className="mono text-muted">{c.folderPath || "/"}</td>
                           <td>{titleCase(c.type)}</td>
                           <td>
                             <PriorityBadge priority={c.priority} />
                           </td>
                           <td>
-                            <AutomationBadge status={c.automation_status} />
+                            <AutomationBadge status={c.automationStatus} />
                           </td>
-                          <td className="mono">v{c.current_version}</td>
+                          <td className="mono">v{c.currentVersion}</td>
                         </tr>
                       ))}
                       <tr style={{ height: Math.max(0, (items.length - end) * ROW_HEIGHT) }} aria-hidden />

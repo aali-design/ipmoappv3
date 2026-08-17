@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useApi } from "@/lib/useApi";
-import { api, buildQuery } from "@/lib/apiClient";
+import { api } from "@/lib/apiClient";
 import { useCurrentProjectId } from "@/lib/project";
 import { chart } from "@/theme";
-import type { Build, TraceabilityMatrix } from "@/lib/types";
+import type { RequirementStatus_Matrix, TraceabilityMatrix } from "@/lib/types";
 import { downloadText, pct, toCsv } from "@/lib/utils";
 import {
   Button,
@@ -30,26 +30,18 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function TraceabilityPage() {
   const projectId = useCurrentProjectId();
-  const [buildId, setBuildId] = useState("");
   const [gapsOnly, setGapsOnly] = useState(false);
 
-  const { data: builds } = useApi<Build[]>(
-    () => api.get<Build[]>(`/projects/${projectId}/builds`).catch(() => [] as Build[]),
-    [projectId],
-  );
   const { data, loading, error, reload } = useApi<TraceabilityMatrix>(
-    () =>
-      api.get(
-        `/projects/${projectId}/traceability${buildQuery({ buildId: buildId || undefined })}`,
-      ),
-    [projectId, buildId],
+    () => api.get(`/projects/${projectId}/traceability`),
+    [projectId],
   );
 
   const rows = useMemo(() => {
     if (!data) return [];
-    return data.requirements.filter((r) => {
+    return data.matrix.filter((r) => {
       if (!gapsOnly) return true;
-      return data.cells[r.id]?.status === "uncovered";
+      return r.status === "uncovered";
     });
   }, [data, gapsOnly]);
 
@@ -57,16 +49,13 @@ export function TraceabilityPage() {
     if (!data) return;
     const rows: Array<Array<string | number>> = [
       ["Requirement", "Title", "Criticality", "Status", "Linked cases"],
-      ...data.requirements.map((r) => {
-        const cell = data.cells[r.id];
-        return [
-          r.ref,
-          r.title,
-          r.criticality,
-          cell ? STATUS_LABEL[cell.status] : "Uncovered",
-          (cell?.case_refs ?? []).join("; "),
-        ];
-      }),
+      ...data.matrix.map((r) => [
+        r.requirement.ref,
+        r.requirement.title,
+        r.requirement.criticality,
+        STATUS_LABEL[r.status] ?? r.status,
+        r.cases.map((c) => c.caseRef).join("; "),
+      ]),
     ];
     downloadText("traceability.csv", toCsv(rows));
   };
@@ -77,18 +66,6 @@ export function TraceabilityPage() {
         title="Traceability Matrix"
         actions={
           <div className="flex items-center gap-2">
-            <select
-              className="select"
-              style={{ width: 220 }}
-              value={buildId}
-              aria-label="Select build"
-              onChange={(e) => setBuildId(e.target.value)}
-            >
-              <option value="">Latest build</option>
-              {builds?.map((b) => (
-                <option key={b.id} value={b.id}>{b.version_label}</option>
-              ))}
-            </select>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -107,14 +84,14 @@ export function TraceabilityPage() {
       <div className="content" style={{ paddingTop: "var(--space-4)" }}>
         {loading ? <LoadingState /> : null}
         {error ? <ErrorState error={error} onRetry={reload} /> : null}
-        {data && data.requirements.length === 0 ? (
+        {data && data.matrix.length === 0 ? (
           <EmptyState title="No requirements" hint="Create requirements to trace test coverage." />
         ) : null}
-        {data && data.requirements.length > 0 ? (
+        {data && data.matrix.length > 0 ? (
           <>
             <div className="flex items-center gap-3 mb-3">
               <span className="badge badge--accent">
-                {pct(data.coveragePct, 0)} coverage
+                {pct(data.coverage, 0)} coverage
               </span>
               <span className="text-sm text-muted">
                 {data.gaps.length} uncovered requirement(s)
@@ -148,16 +125,15 @@ export function TraceabilityPage() {
                 </thead>
                 <tbody>
                   {rows.map((r) => {
-                    const cell = data.cells[r.id];
-                    const status = cell?.status ?? "uncovered";
+                    const status = (r.status as RequirementStatus_Matrix) ?? "uncovered";
                     return (
-                      <tr key={r.id}>
+                      <tr key={r.requirement.id}>
                         <td>
-                          <div className="mono text-xs text-muted">{r.ref}</div>
-                          <div>{r.title}</div>
+                          <div className="mono text-xs text-muted">{r.requirement.ref}</div>
+                          <div>{r.requirement.title}</div>
                         </td>
                         <td>
-                          <span className="badge badge--neutral">{r.criticality}</span>
+                          <span className="badge badge--neutral">{r.requirement.criticality}</span>
                         </td>
                         <td>
                           <span className="flex items-center gap-2">
@@ -175,7 +151,7 @@ export function TraceabilityPage() {
                         </td>
                         <td>
                           <span className="mono text-xs text-muted">
-                            {(cell?.case_refs ?? []).join(", ") || "—"}
+                            {r.cases.map((c) => c.caseRef).join(", ") || "—"}
                           </span>
                         </td>
                       </tr>

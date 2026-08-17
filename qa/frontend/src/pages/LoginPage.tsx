@@ -28,8 +28,8 @@ export function LoginPage({ register = false }: { register?: boolean }) {
         await doRegister({
           email,
           password,
-          full_name: fullName,
-          organization_name: orgName || undefined,
+          fullName,
+          organizationName: orgName || undefined,
         });
       } else {
         await login(email, password);

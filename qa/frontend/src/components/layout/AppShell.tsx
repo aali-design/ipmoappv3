@@ -145,11 +145,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               aria-hidden
             >
-              {(user?.full_name?.[0] ?? "?").toUpperCase()}
+              {(user?.fullName?.[0] ?? "?").toUpperCase()}
             </span>
             <div className="user-chip__info" style={{ minWidth: 0 }}>
               <div className="truncate font-semibold" style={{ fontSize: 12 }}>
-                {user?.full_name ?? "—"}
+                {user?.fullName ?? "—"}
               </div>
               <div className="text-muted" style={{ fontSize: 11 }}>
                 {roleLabels[user?.role ?? "viewer"]}

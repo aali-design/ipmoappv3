@@ -1,14 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "@/lib/useApi";
 import { api, buildQuery } from "@/lib/apiClient";
 import { useProject } from "@/lib/project";
 import { useToast } from "@/components/ui/Toast";
 import type {
-  Build,
   Environment,
   Paginated,
-  ProjectMember,
   Suite,
   SuiteFilter,
   TestCase,
@@ -20,7 +18,7 @@ import { Field } from "@/components/ui";
 
 type Source = "suite" | "filter" | "cases";
 
-const STEPS = ["Source", "Environment", "Build", "Testers", "Review"];
+const STEPS = ["Source", "Environment", "Review"];
 
 export function RunWizardPage() {
   const projectId = useProject().currentProject?.id ?? "";
@@ -33,9 +31,6 @@ export function RunWizardPage() {
   const [filter, setFilter] = useState<SuiteFilter>({});
   const [caseIds, setCaseIds] = useState<Set<string>>(new Set());
   const [environmentId, setEnvironmentId] = useState("");
-  const [buildId, setBuildId] = useState("");
-  const [buildLabel, setBuildLabel] = useState("");
-  const [assignees, setAssignees] = useState<Set<string>>(new Set());
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -45,14 +40,6 @@ export function RunWizardPage() {
   );
   const { data: environments } = useApi<Environment[]>(
     () => api.get(`/projects/${projectId}/environments`),
-    [projectId],
-  );
-  const { data: builds } = useApi<Build[]>(
-    () => api.get<Build[]>(`/projects/${projectId}/builds`).catch(() => [] as Build[]),
-    [projectId],
-  );
-  const { data: members } = useApi<ProjectMember[]>(
-    () => api.get(`/projects/${projectId}/members`),
     [projectId],
   );
   const { data: casesPage } = useApi<Paginated<TestCase>>(
@@ -72,14 +59,9 @@ export function RunWizardPage() {
     [projectId, filter, source],
   );
 
-  const testers = useMemo(
-    () => (members ?? []).filter((m) => ["tester", "qa_lead", "owner"].includes(m.project_role)),
-    [members],
-  );
-
   const previewCount =
     source === "suite"
-      ? suites?.find((s) => s.id === suiteId)?.case_count ?? 0
+      ? suites?.find((s) => s.id === suiteId)?.caseCount ?? 0
       : source === "filter"
         ? match?.total ?? 0
         : caseIds.size;
@@ -89,18 +71,13 @@ export function RunWizardPage() {
     try {
       const body: Record<string, unknown> = {
         name: name || "Manual run",
-        environment_id: environmentId,
-        build_id: buildId || null,
-        build_label: buildLabel || undefined,
+        environmentId,
       };
-      if (source === "suite") body.suite_id = suiteId;
-      else if (source === "filter") body.filter_json = filter;
-      else body.case_ids = Array.from(caseIds);
+      if (source === "suite") body.suiteId = suiteId;
+      else if (source === "filter") body.filter = filter;
+      else body.caseIds = Array.from(caseIds);
 
       const run = await api.post<TestRun>(`/projects/${projectId}/runs`, body);
-      if (assignees.size > 0) {
-        await api.post(`/runs/${run.id}/assign`, { userIds: Array.from(assignees) });
-      }
       success("Run created");
       navigate(`/runs/${run.id}`);
     } catch (err) {
@@ -117,7 +94,6 @@ export function RunWizardPage() {
       return true;
     }
     if (step === 1) return !!environmentId;
-    if (step === 2) return !!(buildId || buildLabel.trim());
     return true;
   };
 
@@ -170,7 +146,7 @@ export function RunWizardPage() {
                     <select className="select" value={suiteId} onChange={(e) => setSuiteId(e.target.value)}>
                       <option value="">Select a suite…</option>
                       {suites?.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.case_count ?? 0})</option>
+                        <option key={s.id} value={s.id}>{s.name} ({s.caseCount ?? 0})</option>
                       ))}
                     </select>
                   </Field>
@@ -246,7 +222,7 @@ export function RunWizardPage() {
                 <select className="select" value={environmentId} onChange={(e) => setEnvironmentId(e.target.value)}>
                   <option value="">Select environment…</option>
                   {environments?.map((env) => (
-                    <option key={env.id} value={env.id}>{env.name}{env.base_url ? ` — ${env.base_url}` : ""}</option>
+                    <option key={env.id} value={env.id}>{env.name}{env.baseUrl ? ` — ${env.baseUrl}` : ""}</option>
                   ))}
                 </select>
               </Field>
@@ -254,68 +230,12 @@ export function RunWizardPage() {
 
             {step === 2 && (
               <div className="space-y-3">
-                <Field label="Build">
-                  <select
-                    className="select"
-                    value={buildId}
-                    onChange={(e) => setBuildId(e.target.value)}
-                  >
-                    <option value="">Select an existing build…</option>
-                    {builds?.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.version_label}{b.commit_sha ? ` — ${b.commit_sha.slice(0, 7)}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Or new build version label" help="Used when no build is selected above.">
-                  <input
-                    className="input mono"
-                    placeholder="2.15.0-rc1"
-                    value={buildLabel}
-                    onChange={(e) => setBuildLabel(e.target.value)}
-                  />
-                </Field>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted">Assign testers (optional).</p>
-                {testers.map((m) => (
-                  <label key={m.user_id} className="flex items-center gap-2" style={{ padding: "var(--space-2)", borderRadius: "var(--radius-md)" }}>
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      checked={assignees.has(m.user_id)}
-                      onChange={() => {
-                        const next = new Set(assignees);
-                        if (next.has(m.user_id)) next.delete(m.user_id);
-                        else next.add(m.user_id);
-                        setAssignees(next);
-                      }}
-                    />
-                    <span>{m.full_name ?? m.email ?? m.user_id}</span>
-                    <span className="badge badge--neutral">{titleCase(m.project_role)}</span>
-                  </label>
-                ))}
-                {testers.length === 0 ? (
-                  <p className="text-muted">No testers available in this project.</p>
-                ) : null}
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="space-y-3">
                 <Field label="Run name">
                   <input className="input" placeholder="Smoke — staging" value={name} onChange={(e) => setName(e.target.value)} />
                 </Field>
                 <div className="flex items-center gap-2">
                   <span className="badge badge--accent">{previewCount} cases</span>
                   <span className="badge badge--neutral">Source: {source}</span>
-                  {assignees.size > 0 ? (
-                    <span className="badge badge--info">{assignees.size} testers</span>
-                  ) : null}
                 </div>
               </div>
             )}
