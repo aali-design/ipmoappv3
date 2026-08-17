@@ -129,6 +129,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sidebar__footer">
+          <div className="build-tag" title={`Build ${__BUILD_TAG__}`}>
+            build {__BUILD_TAG__}
+          </div>
           <div className="user-chip" style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
             <span
               style={{

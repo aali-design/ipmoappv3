@@ -191,7 +191,17 @@ p {
   padding: var(--space-3);
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2.5);
+}
+
+.build-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-textMuted);
+  letter-spacing: 0.02em;
+  flex-basis: 100%;
+  line-height: 1.4;
 }
 
 .main {
