@@ -7,11 +7,13 @@ import { createApp } from "../../src/app";
 import { createPGliteDb } from "./pglite";
 import type { DB } from "../../src/db/types";
 
-// Regression guards for two live-app bugs found during founder review:
+// Regression guards for live-app bugs found during founder review:
 // 1. "Create case" failed because the frontend sends `estimatedMinutes: null`
 //    when the field is empty, but the schema only accepted `undefined`.
 // 2. A run's progress bar never advanced because run stats were only
 //    refreshed on completion, not when an execution was marked.
+// 3. GET /cases/undefined returned a 500 because a non-uuid id reached a
+//    `WHERE id = $1` query; it should return a clean 404.
 let app: ReturnType<typeof createApp>;
 let db: DB;
 let close: () => Promise<void>;
@@ -63,6 +65,26 @@ describe("regression: create case with null optional numerics", () => {
       });
     expect(res.status).toBe(201);
     expect(res.body.estimatedMinutes).toBeNull();
+  });
+});
+
+describe("regression: malformed entity ids return 404, not 500", () => {
+  it("returns 404 for a non-uuid case id (frontend sent /cases/undefined)", async () => {
+    for (const bad of ["undefined", "new", "not-a-uuid", "x".repeat(36)]) {
+      const res = await request(app)
+        .get(`/api/cases/${bad}`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe("NotFound");
+    }
+  });
+
+  it("returns 404 for a non-uuid run id", async () => {
+    const res = await request(app)
+      .get("/api/runs/undefined")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("NotFound");
   });
 });
 

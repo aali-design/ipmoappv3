@@ -158,7 +158,7 @@ export function RunExecutionPage() {
                     style={{ width: "100%", justifyContent: "flex-start" }}
                     onClick={() => setCurrentId(ex.id)}
                   >
-                    <span className="mono text-muted">{ex.caseRef ?? ex.testCaseId.slice(0, 8)}</span>
+                    <span className="mono text-muted">{ex.caseRef ?? (ex.testCaseId ? ex.testCaseId.slice(0, 8) : "—")}</span>
                     <span className="truncate flex-1">{ex.caseTitle ?? "—"}</span>
                     <ExecutionBadge status={ex.status} />
                   </button>
@@ -217,7 +217,7 @@ function ExecutionDetail({
 }) {
   const { success } = useToast();
   const { data: testCase } = useApi<TestCase>(
-    () => api.get(`/cases/${execution.testCaseId}`),
+    () => (execution.testCaseId ? api.get(`/cases/${execution.testCaseId}`) : Promise.resolve(null as unknown as TestCase)),
     [execution.testCaseId],
   );
   const [steps, setSteps] = useState<StepResult[]>([]);
