@@ -60,14 +60,6 @@ export function AppRouter() {
           }
         />
         <Route
-          path="/cases/new"
-          element={
-            <RequireAuth>
-              <CaseDetailPage />
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/cases/:id"
           element={
             <RequireAuth>
